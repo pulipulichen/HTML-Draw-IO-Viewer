@@ -1,0 +1,10 @@
+flowchart TD
+    A[Start] --> B{User Logged In?}
+    B -- Yes --> C[Open Dashboard]
+    B -- No --> D[Show Login Form]
+    D --> E[Submit Credentials]
+    E --> F{Valid?}
+    F -- Yes --> C
+    F -- No --> G[Show Error Message]
+    G --> D
+    C --> H[Done]

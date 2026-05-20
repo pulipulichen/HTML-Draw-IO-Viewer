@@ -6,6 +6,13 @@ export function createSourceFormatController({
     t = (key, fallback = key) => fallback
 }) {
     let currentSourceFormat = "drawio";
+    function looksLikeDrawioXml(sourceText) {
+        const text = String(sourceText || "").trim();
+        if (!text.startsWith("<")) {
+            return false;
+        }
+        return /<mxfile[\s>]|<mxGraphModel[\s>]|<diagram[\s>]/i.test(text);
+    }
 
     function applyModeBadge(badgeElement, modeLabel, isMermaid) {
         badgeElement.textContent = modeLabel;
@@ -98,7 +105,23 @@ export function createSourceFormatController({
     }
 
     function render(xmlText) {
-        const renderFormat = viewer.render(xmlText, { formatHint: dom.sourceFormatSelect.value });
+        const formatHint = dom.sourceFormatSelect.value;
+        const renderFormat = viewer.render(xmlText, {
+            formatHint,
+            onMermaidRenderFailed: ({ sourceText }) => {
+                if (formatHint !== "mermaid" || !looksLikeDrawioXml(sourceText)) {
+                    return false;
+                }
+                setSourceFormatHint("drawio");
+                const fallbackFormat = viewer.render(sourceText, { formatHint: "drawio" });
+                currentSourceFormat = fallbackFormat === "empty" ? "drawio" : fallbackFormat;
+                updateCurrentModeBadge();
+                updateMermaidConvertButtonVisibility();
+                updatePromptExamplesBySourceFormat();
+                updateExportUiBySourceFormat();
+                return true;
+            }
+        });
         currentSourceFormat = renderFormat === "empty" ? "drawio" : renderFormat;
         updateCurrentModeBadge();
         updateMermaidConvertButtonVisibility();

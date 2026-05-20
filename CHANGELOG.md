@@ -13,6 +13,8 @@
 - Added a local bundled Traditional Chinese font asset (`assets/fonts/NotoSansTC-wght.ttf`) for PNG export font embedding without remote font dependencies.
 - Added `scripts/services/fontEmbedService.js` to fetch, convert, and cache the embedded font as a Data URI for repeated exports.
 - Added a global XML export loading overlay to match PNG export feedback behavior and provide clearer download progress cues.
+- Added an AI prompt-history panel below the prompt textarea with persisted entries, quick refill, and keyword search support.
+- Added prompt-history management actions (`Delete` per entry and `Clear all`) with dedicated toast feedback for cleanup workflows.
 
 ### Changed
 
@@ -43,6 +45,15 @@
 - Updated the current file-name row to use a fluid input field and standard text sizing for improved readability and editing comfort.
 - Updated the Draw.io editor section label to use i18n via the new translation key `export.drawioEditorLabel` in both `en` and `zh-TW` dictionaries.
 - Updated Draw.io mode naming in the source-format selector and current-mode badge from `Draw.io XML` to `Draw.io` for clearer, shorter UI wording.
+- Updated the AI panel bottom actions so only the primary submit flow remains sticky, while the `Demo: Translate to English` action now appears as regular content at the end of the AI tab.
+- Updated quick prompt UX from tiny inline links to fluid wrapped chip-style buttons below the prompt textarea for clearer discoverability.
+- Updated prompt examples to include a Draw.io-only compact-layout option (`Make Layout More Compact`) with mode-aware visibility and synchronized detailed prompt text across `en`/`zh-TW`.
+- Renamed built-in sample assets to explicit format-prefixed filenames (`demo/drawio_example1.drawio`, `demo/drawio_example2.drawio`, `demo/mermaid_example1.mmd`, `demo/mermaid_example2.mmd`) and updated all runtime references.
+- Updated Mermaid sample semantics so `mermaid_example1.mmd` stays vertical (`TD`) while `mermaid_example2.mmd` stays horizontal (`LR`) for clearer mode demos.
+- Updated AI demo button copy to be mode-aware (`Translate to English` in Draw.io mode, `Switch to horizontal layout` in Mermaid mode).
+- Moved the Mermaid-to-Draw.io conversion action into the prompt-examples chip row, replacing the separate bottom conversion button.
+- Updated the Mermaid conversion chip behavior to match other prompt-example chips (it now only fills the prompt textarea), and renamed the Traditional Chinese prompt-examples label from `範例用詞` to `範例提示詞`.
+- Updated startup sample fallback to respect the persisted source mode (`mermaid` loads Mermaid sample, otherwise Draw.io sample).
 
 ### Fixed
 
@@ -52,6 +63,8 @@
 - Fixed Mermaid `Syntax error in text` rendering cases by adding pre-render Mermaid parse validation and defensive error handling for error-markup SVG output.
 - Fixed PNG export canvas taint issues caused by remote web-font fetching during SVG rasterization by fully switching export text rendering to local embedded font data.
 - Fixed Mermaid E2E instability in `e2e/mermaid.spec.js` by asserting `#convertMermaidBtn` from the AI tab context, switching textarea checks to `toHaveValue`, and avoiding expected Draw.io parser console errors during format toggles.
+- Fixed mode mismatch after Mermaid render failures by auto-switching to Draw.io when the source content is valid Draw.io XML.
+- Fixed AI Mermaid-mode result handling to only force-switch into Draw.io mode when the Gemini response is Draw.io XML.
 
 ## 0.0.1
 

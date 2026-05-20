@@ -9,7 +9,7 @@
 
 ## 功能特色
 
-- 支援從本機 `.drawio` / `.xml` / `.mmd` / `.mermaid` 檔、XML 網址或內建範例（`demo/example.drawio`、`demo/example.mmd`）載入圖表。
+- 支援從本機 `.drawio` / `.xml` / `.mmd` / `.mermaid` 檔、XML 網址或內建範例（`demo/drawio_example1.drawio`、`demo/mermaid_example1.mmd`）載入圖表。
 - XML 即時預覽，支援平移、縮放與 minimap 導覽。
 - 可透過自然語言請 Gemini 產生或修改圖表 XML。
 - 支援標亮區域（矩形、多邊形、手繪）並作為 Gemini 的視覺上下文。

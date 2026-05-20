@@ -9,7 +9,7 @@ It combines the Draw.io viewer with Gemini-powered prompt editing, highlighted-r
 
 ## Features
 
-- Load diagrams from local `.drawio` / `.xml` / `.mmd` / `.mermaid` files, XML URLs, or built-in samples (`demo/example.drawio`, `demo/example.mmd`).
+- Load diagrams from local `.drawio` / `.xml` / `.mmd` / `.mermaid` files, XML URLs, or built-in samples (`demo/drawio_example1.drawio`, `demo/mermaid_example1.mmd`).
 - Live XML preview with pan/zoom interaction and a minimap navigator.
 - Ask Gemini to generate or modify diagram XML from natural language prompts.
 - Add highlighted regions (rectangle, polygon, freehand) and send them to Gemini as visual context.

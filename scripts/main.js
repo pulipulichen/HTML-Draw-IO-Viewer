@@ -9,6 +9,7 @@ import {
 } from "./constants.js";
 import { createDiagramViewer } from "./core/viewer.js";
 import { createAiHistoryController } from "./features/aiHistoryController.js";
+import { createAiPromptHistoryController } from "./features/aiPromptHistoryController.js";
 import { initializeApp, registerAppEvents } from "./features/appLifecycle.js";
 import { createFileNameManager } from "./features/fileNameManager.js";
 import { createGeminiSettingsController } from "./features/geminiSettingsController.js";
@@ -118,6 +119,22 @@ const aiHistoryController = createAiHistoryController({
     }
 });
 
+const aiPromptHistoryController = createAiPromptHistoryController({
+    dom,
+    t,
+    readStoredJson,
+    writeStoredValue,
+    storageKey: STORAGE_KEYS.aiPromptHistory,
+    showToast: (message, isError) => toast.show(message, Boolean(isError)),
+    onPromptSelected: (prompt) => {
+        dom.aiPrompt.value = prompt;
+        writeStoredValue(STORAGE_KEYS.aiPrompt, prompt);
+        dom.aiPrompt.focus();
+        const cursorPos = prompt.length;
+        dom.aiPrompt.setSelectionRange(cursorPos, cursorPos);
+    }
+});
+
 shortcutsController = createShortcutsController({
     dom,
     viewer,
@@ -149,6 +166,7 @@ function registerEvents() {
         requestAiXml,
         selectionController,
         referenceFilesController,
+        aiPromptHistoryController,
         geminiSettingsController,
         shortcutsController,
         getCurrentSourceFormat: sourceFormatController.getCurrentSourceFormat
@@ -166,7 +184,7 @@ async function loadExampleXml(format = "drawio") {
     return {
         content,
         sourceFormatHint: useMermaid ? "mermaid" : "drawio",
-        fileName: useMermaid ? "example.mmd" : "example.drawio"
+        fileName: useMermaid ? "mermaid_example1.mmd" : "drawio_example1.drawio"
     };
 }
 
@@ -174,6 +192,7 @@ function refreshI18nDrivenUi() {
     uiStateController.setFetchLoading(uiStateController.getIsFetchLoading());
     uiStateController.setAiLoading(uiStateController.getIsAiLoading());
     referenceFilesController.refreshTexts();
+    aiPromptHistoryController.refreshTexts();
     aiHistoryController.refreshTexts();
     selectionController.refreshTexts();
     viewer.minimap.refreshTexts();
@@ -194,6 +213,7 @@ async function initialize() {
         geminiSettingsController,
         referenceFilesController,
         aiHistoryController,
+        aiPromptHistoryController,
         selectionController,
         readStoredValue,
         storageKeys: STORAGE_KEYS,

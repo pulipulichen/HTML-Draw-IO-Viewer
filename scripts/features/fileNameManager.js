@@ -47,6 +47,14 @@ export function createFileNameManager(options) {
         updateCurrentFileNameInput();
     }
 
+    function setSourceFormatExtension(sourceFormat, config = {}) {
+        const { preserveAiEditFlag = true } = config;
+        const parts = splitFileName(sourceFileName);
+        const normalizedFormat = sourceFormat === "mermaid" ? "mermaid" : "drawio";
+        const nextExtension = normalizedFormat === "mermaid" ? ".mmd" : ".drawio";
+        setSourceFileName(`${parts.baseName}${nextExtension}`, { preserveAiEditFlag });
+    }
+
     function markAiEdited(timestampValue = new Date().toISOString()) {
         aiEditedAt = timestampValue;
         updateCurrentFileNameInput();
@@ -90,6 +98,7 @@ export function createFileNameManager(options) {
         getEffectiveExportFileName,
         inferFileNameFromUrl,
         markAiEdited,
+        setSourceFormatExtension,
         setSourceFileName,
         updateCurrentFileNameInput
     };

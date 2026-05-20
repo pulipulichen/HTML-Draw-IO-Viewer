@@ -709,6 +709,17 @@ export function registerInputEvents(options) {
     } = options;
     let isSwitchingSourceFormat = false;
 
+    const clearAiPromptOnModeSwitch = (selectedFormat, currentMode) => {
+        const isManualModeSwitch =
+            (selectedFormat === "drawio" || selectedFormat === "mermaid") &&
+            selectedFormat !== currentMode;
+        if (!isManualModeSwitch) {
+            return;
+        }
+        dom.aiPrompt.value = "";
+        writeStoredValue(storageKeys.aiPrompt, "");
+    };
+
     const applySourceFormatChange = async (selectedFormat, { forceSampleLoad = false } = {}) => {
         const currentMode = getCurrentSourceFormat() === "mermaid" ? "mermaid" : "drawio";
         const canLoadSample = selectedFormat === "drawio" || selectedFormat === "mermaid";
@@ -745,6 +756,7 @@ export function registerInputEvents(options) {
                 writeStoredValue(storageKeys.sourceFormat, selectedFormat);
                 setSourceFormatHint(sample.sourceFormatHint);
                 fillXmlAndRender(sample.content, { sourceFormatHint: sample.sourceFormatHint });
+                clearAiPromptOnModeSwitch(selectedFormat, currentMode);
                 fileNameManager.setSourceFileName(sample.fileName);
                 await onSampleLoaded(sample.content);
                 toast.show(t("toast.sampleLoaded"));
@@ -761,6 +773,7 @@ export function registerInputEvents(options) {
 
         writeStoredValue(storageKeys.sourceFormat, selectedFormat);
         render(dom.xmlInput.value);
+        clearAiPromptOnModeSwitch(selectedFormat, currentMode);
     };
 
     dom.xmlInput.addEventListener("input", () => {

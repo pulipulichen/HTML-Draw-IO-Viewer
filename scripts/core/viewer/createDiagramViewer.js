@@ -44,6 +44,8 @@ export function createDiagramViewer(viewerContainer, onRenderError, translate = 
         const normalizedSource = String(sourceText ?? "");
         const trimmedSource = normalizedSource.trim();
         const formatHint = options.formatHint || "auto";
+        const onMermaidRenderFailed =
+            typeof options.onMermaidRenderFailed === "function" ? options.onMermaidRenderFailed : null;
         const activeFormat = resolveRenderFormat(trimmedSource, formatHint);
 
         renderToken += 1;
@@ -70,9 +72,17 @@ export function createDiagramViewer(viewerContainer, onRenderError, translate = 
                     }
                     console.error("Mermaid 渲染錯誤:", error);
                     clearViewer();
-                    onRenderError(
-                        translate("toast.mermaidParseFailed", "Mermaid parse failed, please check the format")
-                    );
+                    const handled =
+                        onMermaidRenderFailed?.({
+                            error,
+                            sourceText: trimmedSource,
+                            formatHint
+                        }) === true;
+                    if (!handled) {
+                        onRenderError(
+                            translate("toast.mermaidParseFailed", "Mermaid parse failed, please check the format")
+                        );
+                    }
                 });
                 return "mermaid";
             }

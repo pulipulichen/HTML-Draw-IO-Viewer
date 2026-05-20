@@ -33,6 +33,7 @@ export function registerAppEvents(options) {
         requestAiXml,
         selectionController,
         referenceFilesController,
+        aiPromptHistoryController,
         geminiSettingsController,
         shortcutsController,
         getCurrentSourceFormat
@@ -117,6 +118,7 @@ export function registerAppEvents(options) {
         requestAiXml,
         selectionController,
         referenceFilesController,
+        aiPromptHistoryController,
         aiHistoryController,
         fillXmlAndRender,
         fileNameManager,
@@ -140,6 +142,7 @@ export async function initializeApp(options) {
         referenceFilesController,
         aiHistoryController,
         selectionController,
+        aiPromptHistoryController,
         readStoredValue,
         storageKeys,
         fillXmlAndRender,
@@ -159,6 +162,7 @@ export async function initializeApp(options) {
 
     geminiSettingsController.initializeGeminiSettings();
     referenceFilesController.initialize();
+    aiPromptHistoryController.initialize();
     aiHistoryController.initialize();
     selectionController.initialize();
     uiStateController.setActiveTab(readStoredValue(storageKeys.leftPanelTab), { persist: false });
@@ -168,7 +172,8 @@ export async function initializeApp(options) {
         dom.aiPrompt.value = storedAiPrompt;
     }
 
-    setSourceFormatHint(readStoredValue(storageKeys.sourceFormat) || "auto", { persist: false });
+    const initialSourceFormat = readStoredValue(storageKeys.sourceFormat) || "auto";
+    setSourceFormatHint(initialSourceFormat, { persist: false });
     // Register interaction handlers early so tests/users can interact
     // immediately after page load, even while initial sample fetch is in flight.
     registerEvents();
@@ -178,7 +183,8 @@ export async function initializeApp(options) {
         fillXmlAndRender(storedXml, { persist: false });
     } else {
         try {
-            const sample = await loadExampleXml("drawio");
+            const preferredSampleFormat = initialSourceFormat === "mermaid" ? "mermaid" : "drawio";
+            const sample = await loadExampleXml(preferredSampleFormat);
             // Avoid clobbering user/test input when they interact before
             // the async sample fetch resolves.
             if (!dom.xmlInput.value.trim()) {

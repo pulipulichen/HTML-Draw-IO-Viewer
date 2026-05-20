@@ -10,6 +10,7 @@ export function registerAiEvents(options) {
         requestAiXml,
         selectionController,
         referenceFilesController,
+        aiPromptHistoryController,
         aiHistoryController,
         fillXmlAndRender,
         fileNameManager,
@@ -22,11 +23,11 @@ export function registerAiEvents(options) {
     const AI_DEMO_CONFIG = {
         drawio: {
             prompt: "翻譯成英文",
-            filePath: "./demo/example2.drawio"
+            filePath: "./demo/drawio_example2.drawio"
         },
         mermaid: {
             prompt: "請保留結構，改成橫向排列（由左到右）",
-            filePath: "./demo/example2.mmd"
+            filePath: "./demo/mermaid_example2.mmd"
         }
     };
     function looksLikeDrawioXml(text) {
@@ -89,6 +90,7 @@ export function registerAiEvents(options) {
             return;
         }
 
+        aiPromptHistoryController.addPrompt(prompt);
         dom.modelInput.value = model;
         persistGeminiSettings();
 
@@ -109,6 +111,7 @@ export function registerAiEvents(options) {
             const shouldSwitchToDrawio = looksLikeDrawioXml(resultXml);
             if (shouldSwitchToDrawio) {
                 fillXmlAndRender(resultXml, { sourceFormatHint: "drawio" });
+                fileNameManager.setSourceFormatExtension("drawio");
             } else {
                 fillXmlAndRender(resultXml);
             }
@@ -134,71 +137,7 @@ export function registerAiEvents(options) {
         }
     };
 
-    const submitMermaidToDrawioConversion = async () => {
-        const currentSourceText = dom.xmlInput.value.trim();
-        const apiKey = dom.apiKeyInput.value.trim() || envApiKey;
-        const model = dom.modelInput.value.trim() || defaultModelName;
-        const currentSourceFormat = getCurrentSourceFormat();
-
-        if (!currentSourceText) {
-            toast.show(t("toast.noDiagramToSelect"), true);
-            return;
-        }
-
-        if (currentSourceFormat !== "mermaid") {
-            toast.show(t("toast.mermaidOnlyConversion"), true);
-            return;
-        }
-
-        if (!apiKey) {
-            toast.show(t("toast.apiKeyRequired"), true);
-            openGeminiSettingsModal();
-            dom.apiKeyInput.focus();
-            return;
-        }
-
-        dom.modelInput.value = model;
-        persistGeminiSettings();
-
-        const conversionPrompt =
-            "請把以下 Mermaid 圖表語法完整轉換成 Draw.io (mxGraph) XML，保持流程、連線關係與節點語意一致。若 Mermaid 有 subgraph，請在 Draw.io 以群組或容器呈現。\n\n" +
-            currentSourceText;
-
-        setAiLoading(true);
-        try {
-            const resultXml = await requestAiXml({
-                prompt: conversionPrompt,
-                currentXml: "",
-                apiKey,
-                model,
-                referenceFiles: [],
-                selectedRegionImage: null,
-                sourceFormat: "mermaid"
-            });
-
-            fillXmlAndRender(resultXml, { sourceFormatHint: "drawio" });
-            fileNameManager.markAiEdited();
-            const thumbnailDataUrl = await captureHistoryThumbnail();
-            aiHistoryController.addEntry({
-                prompt: t("history.mermaidConvertPrompt", "Convert Mermaid to Draw.io"),
-                resultXml,
-                sourceFormat: getCurrentSourceFormat(),
-                referenceFiles: [],
-                usedSelectedRegionImage: null,
-                fileName: fileNameManager.getEffectiveExportFileName(),
-                thumbnailDataUrl
-            });
-            toast.show(t("toast.mermaidConverted"));
-        } catch (error) {
-            console.error("Mermaid 轉換失敗:", error);
-            toast.show(`${t("toast.aiRequestFailed")}: ${error.message}`, true);
-        } finally {
-            setAiLoading(false);
-        }
-    };
-
     dom.askAiBtn.addEventListener("click", submitAiPrompt);
-    dom.convertMermaidBtn.addEventListener("click", submitMermaidToDrawioConversion);
     dom.aiDemoBtn.addEventListener("click", async () => {
         const currentSourceFormat = getCurrentSourceFormat();
         const demoConfig =
