@@ -19,6 +19,7 @@ import {
 } from "./features/appEventBindings.js";
 import { createFileNameManager } from "./features/fileNameManager.js";
 import { createGeminiSettingsController } from "./features/geminiSettingsController.js";
+import { createHistoryThumbnailCapture } from "./features/historyThumbnailCapture.js";
 import { createReferenceFilesController } from "./features/referenceFilesController.js";
 import { createSelectionController } from "./features/selectionController.js";
 import { createShortcutsController } from "./features/shortcutsController.js";
@@ -87,6 +88,10 @@ function fillXmlAndRender(xmlText, options = {}) {
     }
 }
 
+const captureHistoryThumbnail = createHistoryThumbnailCapture({
+    viewerContainer: dom.viewerContainer
+});
+
 const referenceFilesController = createReferenceFilesController({
     dom,
     t,
@@ -127,7 +132,18 @@ function registerAllEvents() {
         t,
         loadExampleXml,
         fillXmlAndRender,
-        fileNameManager
+        fileNameManager,
+        onSampleLoaded: async (xmlText) => {
+            const thumbnailDataUrl = await captureHistoryThumbnail();
+            aiHistoryController.addEntry({
+                prompt: t("history.sampleLoadPrompt"),
+                resultXml: xmlText,
+                referenceFiles: [],
+                usedSelectedRegionImage: null,
+                fileName: fileNameManager.getEffectiveExportFileName(),
+                thumbnailDataUrl
+            });
+        }
     });
     registerTabEvents({ dom, setActiveTab: uiStateController.setActiveTab });
     registerUrlEvents({
@@ -170,6 +186,7 @@ function registerAllEvents() {
         aiHistoryController,
         fillXmlAndRender,
         fileNameManager,
+        captureHistoryThumbnail,
         setAiLoading: uiStateController.setAiLoading,
         openGeminiSettingsModal: geminiSettingsController.openGeminiSettingsModal,
         persistGeminiSettings: geminiSettingsController.persistGeminiSettings

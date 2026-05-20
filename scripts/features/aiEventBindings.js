@@ -13,10 +13,13 @@ export function registerAiEvents(options) {
         aiHistoryController,
         fillXmlAndRender,
         fileNameManager,
+        captureHistoryThumbnail,
         setAiLoading,
         openGeminiSettingsModal,
         persistGeminiSettings
     } = options;
+    const AI_DEMO_PROMPT = "翻譯成英文";
+    const AI_DEMO_FILE_PATH = "./example2.drawio";
 
     dom.aiTabPanel.addEventListener("click", (event) => {
         let target = null;
@@ -87,11 +90,14 @@ export function registerAiEvents(options) {
 
             fillXmlAndRender(resultXml);
             fileNameManager.markAiEdited();
+            const thumbnailDataUrl = await captureHistoryThumbnail();
             aiHistoryController.addEntry({
                 prompt,
                 resultXml,
                 referenceFiles,
-                usedSelectedRegionImage
+                usedSelectedRegionImage,
+                fileName: fileNameManager.getEffectiveExportFileName(),
+                thumbnailDataUrl
             });
             dom.aiPrompt.value = "";
             writeStoredValue(storageKeys.aiPrompt, "");
@@ -105,6 +111,36 @@ export function registerAiEvents(options) {
     };
 
     dom.askAiBtn.addEventListener("click", submitAiPrompt);
+    dom.aiDemoBtn.addEventListener("click", async () => {
+        setAiLoading(true);
+        try {
+            const response = await window.fetch(AI_DEMO_FILE_PATH, { cache: "no-store" });
+            if (!response.ok) {
+                throw new Error(`載入 demo 檔案失敗 (${response.status})`);
+            }
+
+            const resultXml = await response.text();
+            dom.aiPrompt.value = AI_DEMO_PROMPT;
+            writeStoredValue(storageKeys.aiPrompt, dom.aiPrompt.value);
+            fillXmlAndRender(resultXml);
+            fileNameManager.markAiEdited();
+            const thumbnailDataUrl = await captureHistoryThumbnail();
+            aiHistoryController.addEntry({
+                prompt: AI_DEMO_PROMPT,
+                resultXml,
+                referenceFiles: [],
+                usedSelectedRegionImage: null,
+                fileName: fileNameManager.getEffectiveExportFileName(),
+                thumbnailDataUrl
+            });
+            toast.show(t("toast.aiDemoApplied"));
+        } catch (error) {
+            console.error("AI Demo 載入失敗:", error);
+            toast.show(`${t("toast.aiRequestFailed")}: ${error.message}`, true);
+        } finally {
+            setAiLoading(false);
+        }
+    });
 
     dom.aiPrompt.addEventListener("keydown", (event) => {
         if (event.key === "Enter" && event.ctrlKey) {

@@ -48,6 +48,7 @@ export function getDomElements() {
         askAiBtn: getRequiredElement("askAiBtn"),
         askAiBtnText: getRequiredElement("askAiBtnText"),
         aiSpinner: getRequiredElement("aiSpinner"),
+        aiDemoBtn: getRequiredElement("aiDemoBtn"),
         aiHistoryList: getRequiredElement("aiHistoryList"),
         aiHistoryEmpty: getRequiredElement("aiHistoryEmpty"),
         clearHistoryBtn: getRequiredElement("clearHistoryBtn"),

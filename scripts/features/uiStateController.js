@@ -20,10 +20,13 @@ export function createUiStateController(options) {
     function setAiLoading(isLoading) {
         isAiLoading = isLoading;
         dom.askAiBtn.disabled = isLoading;
+        dom.aiDemoBtn.disabled = isLoading;
         dom.askAiBtnText.textContent = isLoading ? t("ai.askBtnLoading") : t("ai.askBtnIdle");
         dom.aiSpinner.classList.toggle("hidden", !isLoading);
         dom.askAiBtn.classList.toggle("opacity-75", isLoading);
         dom.askAiBtn.classList.toggle("cursor-not-allowed", isLoading);
+        dom.aiDemoBtn.classList.toggle("opacity-75", isLoading);
+        dom.aiDemoBtn.classList.toggle("cursor-not-allowed", isLoading);
         dom.aiLoadingOverlay.classList.toggle("hidden", !isLoading);
         dom.aiLoadingOverlay.classList.toggle("flex", isLoading);
     }

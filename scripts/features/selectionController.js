@@ -679,12 +679,7 @@ export function createSelectionController({
             try {
                 return await captureViewerFromSvgDataUrl();
             } catch (svgDataUrlError) {
-                console.warn("SVG dataURL 擷取失敗，嘗試 SVG-only fallback:", svgDataUrlError);
-            }
-            try {
-                return await captureSvgOnlyFallback();
-            } catch (svgOnlyError) {
-                console.warn("SVG-only fallback 失敗，改用 html2canvas (diagram-layer):", svgOnlyError);
+                console.warn("SVG dataURL 擷取失敗，改用 html2canvas (diagram-layer):", svgDataUrlError);
             }
 
             try {
@@ -748,70 +743,6 @@ export function createSelectionController({
     async function captureHighlightedContext() {
         if (!highlights.length) {
             throw new Error("no highlight");
-        }
-
-        // Gemini API does not accept image/svg+xml; convert SVG snapshot to PNG first.
-        try {
-            const svgSnapshot = buildSvgSnapshotContext();
-            const ratio = window.devicePixelRatio || 1;
-            const [fullCanvas, highlightedCanvas] = await Promise.all([
-                drawSvgDataUrlToCanvas(svgSnapshot.fullImage.dataUrl, svgSnapshot.fullImage.width, svgSnapshot.fullImage.height, ratio),
-                drawSvgDataUrlToCanvas(svgSnapshot.highlightedImage.dataUrl, svgSnapshot.highlightedImage.width, svgSnapshot.highlightedImage.height, ratio)
-            ]);
-            const fullDataUrl = safeCanvasToDataUrl(fullCanvas);
-            const highlightedDataUrl = safeCanvasToDataUrl(highlightedCanvas);
-            if (fullDataUrl && highlightedDataUrl) {
-                return {
-                    mimeType: "image/png",
-                    dataUrl: highlightedDataUrl,
-                    width: highlightedCanvas.width,
-                    height: highlightedCanvas.height,
-                    highlightCount: highlights.length,
-                    fullImage: {
-                        mimeType: "image/png",
-                        dataUrl: fullDataUrl,
-                        width: fullCanvas.width,
-                        height: fullCanvas.height
-                    },
-                    highlightedImage: {
-                        mimeType: "image/png",
-                        dataUrl: highlightedDataUrl,
-                        width: highlightedCanvas.width,
-                        height: highlightedCanvas.height
-                    }
-                };
-            }
-        } catch (svgSnapshotError) {
-            console.warn("SVG 快照路徑失敗，改用 raster fallback:", svgSnapshotError);
-        }
-
-        try {
-            const composed = await captureViewerFromComposedSvg();
-            const highlightedDataUrl = safeCanvasToDataUrl(composed.highlightedCanvas);
-            const fullDataUrl = safeCanvasToDataUrl(composed.fullCanvas);
-            if (highlightedDataUrl && fullDataUrl) {
-                return {
-                    mimeType: "image/png",
-                    dataUrl: highlightedDataUrl,
-                    width: composed.highlightedCanvas.width,
-                    height: composed.highlightedCanvas.height,
-                    highlightCount: highlights.length,
-                    fullImage: {
-                        mimeType: "image/png",
-                        dataUrl: fullDataUrl,
-                        width: composed.fullCanvas.width,
-                        height: composed.fullCanvas.height
-                    },
-                    highlightedImage: {
-                        mimeType: "image/png",
-                        dataUrl: highlightedDataUrl,
-                        width: composed.highlightedCanvas.width,
-                        height: composed.highlightedCanvas.height
-                    }
-                };
-            }
-        } catch (composeError) {
-            console.warn("組合式 SVG 快照失敗，改用舊流程:", composeError);
         }
 
         let fullCanvas = null;

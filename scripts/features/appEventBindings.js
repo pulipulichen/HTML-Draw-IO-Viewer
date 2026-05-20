@@ -21,7 +21,8 @@ export function registerInputEvents(options) {
         t,
         loadExampleXml,
         fillXmlAndRender,
-        fileNameManager
+        fileNameManager,
+        onSampleLoaded = async () => {}
     } = options;
 
     dom.xmlInput.addEventListener("input", () => {
@@ -60,6 +61,7 @@ export function registerInputEvents(options) {
                 const exampleXml = await loadExampleXml();
                 fillXmlAndRender(exampleXml);
                 fileNameManager.setSourceFileName("example.drawio");
+                await onSampleLoaded(exampleXml);
                 toast.show(t("toast.sampleLoaded"));
             } catch (_error) {
                 toast.show(t("toast.sampleLoadFailed"), true);
