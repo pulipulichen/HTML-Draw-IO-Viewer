@@ -1,11 +1,11 @@
 window.I18N_TRANSLATIONS = window.I18N_TRANSLATIONS || {};
 
 window.I18N_TRANSLATIONS["zh-TW"] = {
-    "meta.title": "Draw.io AI 即時預覽與編輯器",
+    "meta.title": "AI Dragram Editor",
     "language.label": "語系",
     "language.en": "English",
     "language.zh-TW": "繁體中文",
-    "header.title": "Draw.io AI 編輯器",
+    "header.title": "AI Dragram Editor",
     "tabs.editor": "原始碼 (X)",
     "tabs.aiEditor": "AI編輯 (Tab)",
     "tabs.versions": "版本紀錄 (V)",
@@ -34,6 +34,9 @@ window.I18N_TRANSLATIONS["zh-TW"] = {
     "ai.promptPlaceholder": "例如：幫我在最後面加一個紅色的「結束」節點，或是幫我產生一個登入流程圖...",
     "ai.promptQuickOrgChart": "組織圖",
     "ai.promptQuickColorAdjust": "調整顏色",
+    "ai.currentModeLabel": "目前模式",
+    "ai.currentModeDrawio": "Draw.io XML",
+    "ai.currentModeMermaid": "Mermaid",
     "ai.clearPromptBtn": "清空",
     "ai.demoBtn": "Demo：翻譯成英文（不連 Gemini）",
     "ai.promptExamplesTitle": "範例用詞",

@@ -19,8 +19,16 @@ export function registerAiEvents(options) {
         persistGeminiSettings,
         getCurrentSourceFormat
     } = options;
-    const AI_DEMO_PROMPT = "翻譯成英文";
-    const AI_DEMO_FILE_PATH = "./demo/example2.drawio";
+    const AI_DEMO_CONFIG = {
+        drawio: {
+            prompt: "翻譯成英文",
+            filePath: "./demo/example2.drawio"
+        },
+        mermaid: {
+            prompt: "請保留結構，將節點文字翻譯成英文",
+            filePath: "./demo/example2.mmd"
+        }
+    };
 
     dom.aiTabPanel.addEventListener("click", (event) => {
         let target = null;
@@ -97,6 +105,7 @@ export function registerAiEvents(options) {
             aiHistoryController.addEntry({
                 prompt,
                 resultXml,
+                sourceFormat: getCurrentSourceFormat(),
                 referenceFiles,
                 usedSelectedRegionImage,
                 fileName: fileNameManager.getEffectiveExportFileName(),
@@ -161,6 +170,7 @@ export function registerAiEvents(options) {
             aiHistoryController.addEntry({
                 prompt: t("history.mermaidConvertPrompt", "Convert Mermaid to Draw.io"),
                 resultXml,
+                sourceFormat: getCurrentSourceFormat(),
                 referenceFiles: [],
                 usedSelectedRegionImage: null,
                 fileName: fileNameManager.getEffectiveExportFileName(),
@@ -178,22 +188,30 @@ export function registerAiEvents(options) {
     dom.askAiBtn.addEventListener("click", submitAiPrompt);
     dom.convertMermaidBtn.addEventListener("click", submitMermaidToDrawioConversion);
     dom.aiDemoBtn.addEventListener("click", async () => {
+        const currentSourceFormat = getCurrentSourceFormat();
+        const demoConfig =
+            currentSourceFormat === "mermaid" ? AI_DEMO_CONFIG.mermaid : AI_DEMO_CONFIG.drawio;
         setAiLoading(true);
         try {
-            const response = await window.fetch(AI_DEMO_FILE_PATH, { cache: "no-store" });
+            const response = await window.fetch(demoConfig.filePath, { cache: "no-store" });
             if (!response.ok) {
                 throw new Error(`載入 demo 檔案失敗 (${response.status})`);
             }
 
             const resultXml = await response.text();
-            dom.aiPrompt.value = AI_DEMO_PROMPT;
+            dom.aiPrompt.value = demoConfig.prompt;
             writeStoredValue(storageKeys.aiPrompt, dom.aiPrompt.value);
-            fillXmlAndRender(resultXml);
+            if (currentSourceFormat === "mermaid") {
+                fillXmlAndRender(resultXml, { sourceFormatHint: "mermaid" });
+            } else {
+                fillXmlAndRender(resultXml, { sourceFormatHint: "drawio" });
+            }
             fileNameManager.markAiEdited();
             const thumbnailDataUrl = await captureHistoryThumbnail();
             aiHistoryController.addEntry({
-                prompt: AI_DEMO_PROMPT,
+                prompt: demoConfig.prompt,
                 resultXml,
+                sourceFormat: getCurrentSourceFormat(),
                 referenceFiles: [],
                 usedSelectedRegionImage: null,
                 fileName: fileNameManager.getEffectiveExportFileName(),

@@ -8,7 +8,7 @@
     <meta name="msapplication-TileImage" content="./assets/favicon/favicon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>Draw.io AI Editor</title>
+    <title>AI Dragram Editor</title>
     <link rel="manifest" href="./manifest.json">
     <link rel="icon" href="./assets/favicon/favicon.png" type="image/png">
     <link rel="apple-touch-icon" href="./assets/favicon/favicon.png">
@@ -28,7 +28,7 @@
             <div class="flex items-center justify-between gap-3">
                 <h1 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                    <span data-i18n="header.title">Draw.io AI Editor</span>
+                    <span data-i18n="header.title">AI Dragram Editor</span>
                 </h1>
                 <div class="flex items-center gap-2">
                     <label for="languageSelect" class="text-xs text-slate-500 font-medium" data-i18n="language.label">Language</label>
@@ -38,6 +38,10 @@
             </div>
 
             <div class="left-tabs flex flex-col gap-4 flex-1 min-h-0">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-slate-500" data-i18n="ai.currentModeLabel">目前模式</span>
+                    <span id="currentSourceModeBadge" class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold text-indigo-700 border-indigo-200 bg-indigo-50"></span>
+                </div>
                 <div class="grid grid-cols-3 p-1 bg-slate-100 rounded-lg">
                     <button id="editorTabBtn" type="button" data-tab-target="editor" class="left-tab-btn active px-3 py-2 text-sm rounded-md font-semibold transition-colors" data-i18n="tabs.editor">Source (X)</button>
                     <button id="aiTabBtn" type="button" data-tab-target="ai" class="left-tab-btn px-3 py-2 text-sm rounded-md font-semibold transition-colors" data-i18n="tabs.aiEditor">AI Editor (Tab)</button>
@@ -185,6 +189,10 @@
                         <div class="flex items-center justify-between mb-2">
                             <h3 class="text-sm font-bold text-slate-700" data-i18n="history.title">Version History</h3>
                             <button id="clearHistoryBtn" type="button" class="text-xs text-slate-500 hover:text-slate-700 font-medium" data-i18n="history.clearBtn">Clear history</button>
+                        </div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-medium text-slate-500" data-i18n="ai.currentModeLabel">目前模式</span>
+                            <span id="versionsCurrentSourceModeBadge" class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold text-indigo-700 border-indigo-200 bg-indigo-50"></span>
                         </div>
                         <p id="aiHistoryEmpty" class="text-xs text-slate-500" data-i18n="history.empty">No AI change history yet.</p>
                         <ul id="aiHistoryList" class="space-y-2 mt-2 overflow-y-auto min-h-0 flex-1 pr-1"></ul>

@@ -23,15 +23,30 @@ export function registerInputEvents(options) {
         fillXmlAndRender,
         fileNameManager,
         onSampleLoaded = async () => {},
-        setSourceFormatHint = () => {}
+        setSourceFormatHint = () => {},
+        getCurrentSourceFormat = () => "drawio"
     } = options;
 
     dom.xmlInput.addEventListener("input", () => {
         writeStoredValue(storageKeys.diagramXml, dom.xmlInput.value);
     });
 
-    dom.sourceFormatSelect.addEventListener("change", () => {
+    dom.sourceFormatSelect.addEventListener("change", async () => {
         writeStoredValue(storageKeys.sourceFormat, dom.sourceFormatSelect.value);
+        const selectedFormat = dom.sourceFormatSelect.value;
+        if (selectedFormat === "drawio" || selectedFormat === "mermaid") {
+            try {
+                const sample = await loadExampleXml(selectedFormat);
+                setSourceFormatHint(sample.sourceFormatHint);
+                fillXmlAndRender(sample.content, { sourceFormatHint: sample.sourceFormatHint });
+                fileNameManager.setSourceFileName(sample.fileName);
+                toast.show(t("toast.sampleLoaded"));
+                return;
+            } catch (_error) {
+                toast.show(t("toast.sampleLoadFailed"), true);
+            }
+        }
+
         render(dom.xmlInput.value);
     });
 
@@ -70,8 +85,15 @@ export function registerInputEvents(options) {
 
         window.setTimeout(async () => {
             try {
+                const selectedFormat = dom.sourceFormatSelect.value;
                 const preferredFormat =
-                    dom.sourceFormatSelect.value === "mermaid" ? "mermaid" : "drawio";
+                    selectedFormat === "mermaid"
+                        ? "mermaid"
+                        : selectedFormat === "drawio"
+                          ? "drawio"
+                          : getCurrentSourceFormat() === "mermaid"
+                            ? "mermaid"
+                            : "drawio";
                 const sample = await loadExampleXml(preferredFormat);
                 setSourceFormatHint(sample.sourceFormatHint);
                 fillXmlAndRender(sample.content, { sourceFormatHint: sample.sourceFormatHint });

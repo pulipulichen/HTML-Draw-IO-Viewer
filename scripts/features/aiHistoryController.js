@@ -11,6 +11,21 @@ function sanitizeFileName(fileName, fallback = "diagram.drawio") {
     return normalized.replace(/[<>:"/\\|?*\x00-\x1F]/g, "_");
 }
 
+function detectSourceFormatFromResult(resultXml) {
+    const text = String(resultXml || "").trim();
+    if (!text) {
+        return "drawio";
+    }
+    return text.startsWith("<") ? "drawio" : "mermaid";
+}
+
+function normalizeSourceFormat(sourceFormat, resultXml) {
+    if (sourceFormat === "drawio" || sourceFormat === "mermaid") {
+        return sourceFormat;
+    }
+    return detectSourceFormatFromResult(resultXml);
+}
+
 function sanitizeHistoryEntry(rawEntry) {
     if (!rawEntry || !rawEntry.prompt || !rawEntry.resultXml || !rawEntry.timestamp) {
         return null;
@@ -23,6 +38,7 @@ function sanitizeHistoryEntry(rawEntry) {
         timestamp: rawEntry.timestamp,
         prompt: String(rawEntry.prompt),
         resultXml: String(rawEntry.resultXml),
+        sourceFormat: normalizeSourceFormat(rawEntry.sourceFormat, rawEntry.resultXml),
         fileName: sanitizeFileName(rawEntry.fileName),
         thumbnailDataUrl: safeThumbnail
     };
@@ -113,12 +129,21 @@ export function createAiHistoryController({
             contentWrap.className = "min-w-0 flex-1";
 
             const topRow = document.createElement("div");
-            topRow.className = "flex items-center";
+            topRow.className = "flex items-center justify-between gap-2";
 
             const meta = document.createElement("span");
             meta.className = "history-meta text-[11px] font-medium whitespace-nowrap";
             meta.textContent = `${t("history.itemLabel")} #${entries.length - index} · ${formatTimestamp(entry.timestamp)}`;
             meta.title = meta.textContent;
+
+            const isMermaid = entry.sourceFormat === "mermaid";
+            const modeBadge = document.createElement("span");
+            modeBadge.className = isMermaid
+                ? "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold text-emerald-700 border-emerald-200 bg-emerald-50 shrink-0"
+                : "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold text-indigo-700 border-indigo-200 bg-indigo-50 shrink-0";
+            modeBadge.textContent = `${t("ai.currentModeLabel")}: ${
+                isMermaid ? t("ai.currentModeMermaid", "Mermaid") : t("ai.currentModeDrawio", "Draw.io XML")
+            }`;
 
             const restoreButton = document.createElement("button");
             restoreButton.type = "button";
@@ -152,6 +177,7 @@ export function createAiHistoryController({
             actions.appendChild(downloadButton);
 
             topRow.appendChild(meta);
+            topRow.appendChild(modeBadge);
 
             const actionRow = document.createElement("div");
             actionRow.className = "mt-1 flex items-center gap-1.5";
@@ -189,6 +215,7 @@ export function createAiHistoryController({
     function addEntry({
         prompt,
         resultXml,
+        sourceFormat = "drawio",
         referenceFiles,
         usedSelectedRegionImage,
         fileName,
@@ -210,6 +237,7 @@ export function createAiHistoryController({
             timestamp: new Date().toISOString(),
             prompt: `${prompt}${referencesSummary}${selectedRegionSummary}`,
             resultXml,
+            sourceFormat: normalizeSourceFormat(sourceFormat, resultXml),
             fileName: sanitizeFileName(fileName),
             thumbnailDataUrl: hasValidThumbnail ? thumbnailDataUrl : ""
         };

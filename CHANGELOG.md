@@ -16,7 +16,9 @@
 - Updated sample loading behavior so `Load Sample` now follows current source format (`Draw.io` loads `demo/example.drawio`, `Mermaid` loads `demo/example.mmd`).
 - Updated sample/demo file paths used by runtime logic (startup sample load, AI demo load, service-worker cache list, and E2E file paths) to the `demo/` directory.
 - Updated import support to include Mermaid file extensions (`.mmd`, `.mermaid`).
-- Updated AI prompt assembly to support Mermaid-origin editing context while still returning Draw.io XML.
+- Updated version history entries to persist and display the source mode captured at creation time (instead of showing only the current global mode).
+- Updated app branding/title text across HTML title, i18n metadata, and PWA manifest to `AI Dragram Editor` (including `short_name`).
+- Updated Mermaid-mode AI behavior to keep responses in Mermaid by default, and only return Draw.io XML when the prompt explicitly requests conversion.
 - Refactored viewer architecture into feature-focused modules under `scripts/core/viewer/` (`createDiagramViewer`, `renderEngine`, `panZoom`, `format`) and kept `scripts/core/viewer.js` as stable re-export.
 - Refactored app startup/event orchestration out of `scripts/main.js` into `scripts/features/appLifecycle.js` and isolated source-format state logic in `scripts/features/sourceFormatController.js`.
 - Updated sample button text from `Load Sample XML` to `Load Sample` (and corresponding Traditional Chinese text).
@@ -34,7 +36,7 @@
 - File import support for `.xml` and `.drawio` via drag-and-drop and local file picker.
 - URL-based XML loading with inline status feedback.
 - Built-in sample XML loading for quick demo and onboarding.
-- Added external prompt configuration at `scripts/prompts/system_prompt.md` for easier AI system prompt editing.
+- Added external prompt configuration at `scripts/prompts/system_prompt_drawio.md` for easier AI system prompt editing.
 - Added `.jshintrc` with ES module/browser settings to keep lint behavior consistent after script splitting.
 - Added a dedicated Gemini settings modal with open/close controls and save actions.
 - Added persistent Gemini settings storage in `localStorage` for API key and model name.

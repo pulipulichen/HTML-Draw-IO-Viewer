@@ -50,11 +50,13 @@ export function registerAppEvents(options) {
         fillXmlAndRender,
         fileNameManager,
         setSourceFormatHint,
+        getCurrentSourceFormat,
         onSampleLoaded: async (xmlText) => {
             const thumbnailDataUrl = await captureHistoryThumbnail();
             aiHistoryController.addEntry({
                 prompt: t("history.sampleLoadPrompt"),
                 resultXml: xmlText,
+                sourceFormat: getCurrentSourceFormat(),
                 referenceFiles: [],
                 usedSelectedRegionImage: null,
                 fileName: fileNameManager.getEffectiveExportFileName(),

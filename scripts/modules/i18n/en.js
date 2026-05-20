@@ -1,11 +1,11 @@
 window.I18N_TRANSLATIONS = window.I18N_TRANSLATIONS || {};
 
 window.I18N_TRANSLATIONS.en = {
-    "meta.title": "Draw.io AI Editor",
+    "meta.title": "AI Dragram Editor",
     "language.label": "Language",
     "language.en": "English",
     "language.zh-TW": "Traditional Chinese",
-    "header.title": "Draw.io AI Editor",
+    "header.title": "AI Dragram Editor",
     "tabs.editor": "Source (X)",
     "tabs.aiEditor": "AI Editor (Tab)",
     "tabs.versions": "Versions (V)",
@@ -35,6 +35,9 @@ window.I18N_TRANSLATIONS.en = {
         "Example: Add a red 'End' node at the end, or generate a login flowchart...",
     "ai.promptQuickOrgChart": "Org Chart",
     "ai.promptQuickColorAdjust": "Adjust Colors",
+    "ai.currentModeLabel": "Current mode",
+    "ai.currentModeDrawio": "Draw.io XML",
+    "ai.currentModeMermaid": "Mermaid",
     "ai.clearPromptBtn": "Clear",
     "ai.demoBtn": "Demo: Translate to English (No Gemini)",
     "ai.promptExamplesTitle": "Prompt examples",

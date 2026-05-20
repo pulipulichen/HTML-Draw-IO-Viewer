@@ -1,6 +1,6 @@
 {
-    "name": "Draw.io AI Editor",
-    "short_name": "DrawIO AI",
+    "name": "AI Dragram Editor",
+    "short_name": "AI Dragram",
     "description": "A pure HTML Draw.io viewer and editor that supports viewing raw XML files and editing diagrams through Gemini AI conversations.",
     "start_url": ".",
     "scope": ".",

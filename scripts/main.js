@@ -62,7 +62,8 @@ const sourceFormatController = createSourceFormatController({
     dom,
     viewer,
     writeStoredValue,
-    storageKeys: STORAGE_KEYS
+    storageKeys: STORAGE_KEYS,
+    t
 });
 const { render, setSourceFormatHint } = sourceFormatController;
 
@@ -178,6 +179,7 @@ function refreshI18nDrivenUi() {
     viewer.minimap.refreshTexts();
     fileNameManager.updateCurrentFileNameInput();
     sourceFormatController.updateMermaidConvertButtonVisibility();
+    sourceFormatController.refreshCurrentModeBadge();
     if (!dom.xmlInput.value.trim()) {
         render("");
     }

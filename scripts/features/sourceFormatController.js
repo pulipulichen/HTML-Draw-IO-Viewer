@@ -1,5 +1,27 @@
-export function createSourceFormatController({ dom, viewer, writeStoredValue, storageKeys }) {
+export function createSourceFormatController({
+    dom,
+    viewer,
+    writeStoredValue,
+    storageKeys,
+    t = (key, fallback = key) => fallback
+}) {
     let currentSourceFormat = "drawio";
+
+    function applyModeBadge(badgeElement, modeLabel, isMermaid) {
+        badgeElement.textContent = modeLabel;
+        badgeElement.className = isMermaid
+            ? "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold text-emerald-700 border-emerald-200 bg-emerald-50"
+            : "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold text-indigo-700 border-indigo-200 bg-indigo-50";
+    }
+
+    function updateCurrentModeBadge() {
+        const isMermaid = currentSourceFormat === "mermaid";
+        const modeLabel = isMermaid
+            ? t("ai.currentModeMermaid", "Mermaid")
+            : t("ai.currentModeDrawio", "Draw.io XML");
+        applyModeBadge(dom.currentSourceModeBadge, modeLabel, isMermaid);
+        applyModeBadge(dom.versionsCurrentSourceModeBadge, modeLabel, isMermaid);
+    }
 
     function updateMermaidConvertButtonVisibility() {
         const hasContent = Boolean(dom.xmlInput.value.trim());
@@ -19,6 +41,7 @@ export function createSourceFormatController({ dom, viewer, writeStoredValue, st
     function render(xmlText) {
         const renderFormat = viewer.render(xmlText, { formatHint: dom.sourceFormatSelect.value });
         currentSourceFormat = renderFormat === "empty" ? "drawio" : renderFormat;
+        updateCurrentModeBadge();
         updateMermaidConvertButtonVisibility();
     }
 
@@ -30,6 +53,7 @@ export function createSourceFormatController({ dom, viewer, writeStoredValue, st
         render,
         setSourceFormatHint,
         getCurrentSourceFormat,
-        updateMermaidConvertButtonVisibility
+        updateMermaidConvertButtonVisibility,
+        refreshCurrentModeBadge: updateCurrentModeBadge
     };
 }

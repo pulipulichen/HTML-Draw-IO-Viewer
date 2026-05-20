@@ -37,6 +37,8 @@ export function getDomElements() {
         apiKeyInput: getRequiredElement("apiKeyInput"),
         modelInput: getRequiredElement("modelInput"),
         aiPrompt: getRequiredElement("aiPrompt"),
+        currentSourceModeBadge: getRequiredElement("currentSourceModeBadge"),
+        versionsCurrentSourceModeBadge: getRequiredElement("versionsCurrentSourceModeBadge"),
         referenceDropzone: getRequiredElement("referenceDropzone"),
         referenceUploadBtn: getRequiredElement("referenceUploadBtn"),
         referenceFileInput: getRequiredElement("referenceFileInput"),
