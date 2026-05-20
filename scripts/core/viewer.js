@@ -1,10 +1,24 @@
 const EMPTY_VIEW_HTML =
-    '<div class="absolute inset-0 flex items-center justify-center text-slate-400">目前沒有內容可以預覽</div>';
+    '<div class="absolute inset-0 flex items-center justify-center text-slate-400">%EMPTY_MESSAGE%</div>';
 
-export function createDiagramViewer(viewerContainer, onRenderError) {
+function activatePanTool(diagramHost) {
+    const panToggleButton =
+        diagramHost.querySelector('[title="Pan"]') ||
+        diagramHost.querySelector('[title="平移"]') ||
+        diagramHost.querySelector('[data-action="pan"]');
+
+    if (panToggleButton instanceof HTMLElement) {
+        panToggleButton.click();
+    }
+}
+
+export function createDiagramViewer(viewerContainer, onRenderError, translate = (key, fallback = key) => fallback) {
     function render(xmlString) {
         if (!xmlString || xmlString.trim() === "") {
-            viewerContainer.innerHTML = EMPTY_VIEW_HTML;
+            viewerContainer.innerHTML = EMPTY_VIEW_HTML.replace(
+                "%EMPTY_MESSAGE%",
+                translate("viewer.empty", "No content to preview")
+            );
             return;
         }
 
@@ -15,11 +29,18 @@ export function createDiagramViewer(viewerContainer, onRenderError) {
             diagramHost.className = "mxgraph";
             diagramHost.style.width = "100%";
             diagramHost.style.height = "100%";
+            diagramHost.style.display = "flex";
+            diagramHost.style.alignItems = "center";
+            diagramHost.style.justifyContent = "center";
 
             const config = {
                 highlight: "#4f46e5",
                 nav: true,
                 resize: true,
+                fit: true,
+                center: true,
+                zoomWheel: true,
+                pan: true,
                 toolbar: "zoom pan lightbox",
                 xml: xmlString
             };
@@ -29,13 +50,16 @@ export function createDiagramViewer(viewerContainer, onRenderError) {
 
             if (typeof GraphViewer !== "undefined" && typeof GraphViewer.processElements === "function") {
                 GraphViewer.processElements();
+                window.requestAnimationFrame(() => {
+                    activatePanTool(diagramHost);
+                });
                 return;
             }
 
             throw new Error("GraphViewer 尚未載入");
         } catch (error) {
             console.error("渲染錯誤:", error);
-            onRenderError("XML 解析失敗，請檢查格式是否正確。");
+            onRenderError(translate("toast.xmlParseFailed", "XML parse failed, please check the format"));
         }
     }
 

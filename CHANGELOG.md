@@ -11,6 +11,10 @@
 - Added `.jshintrc` with ES module/browser settings to keep lint behavior consistent after script splitting.
 - Added a dedicated Gemini settings modal with open/close controls and save actions.
 - Added persistent Gemini settings storage in `localStorage` for API key and model name.
+- Added browser-based i18n architecture with split translation dictionaries under `scripts/modules/i18n/`.
+- Added PWA assets and configuration (`manifest.json`, `service-worker.js`, and favicon resources).
+- Added Docker-based Playwright E2E testing scaffold (`e2e/`, `Dockerfile.test`, `docker-compose.yml`, `playwright.config.js`, and test scripts).
+- Added GitHub Actions workflow to run Docker Compose E2E checks on pushes and pull requests.
 
 ### Changed
 - Added debounced live preview rendering to reduce excessive redraws during typing.
@@ -21,12 +25,16 @@
 - Replaced the model dropdown with a free-text model input and defaulted it to `gemini-flash-latest`.
 - Moved the built-in sample diagram XML into a dedicated `example.drawio` file and loaded it dynamically.
 - Updated startup behavior to restore the last saved diagram from `localStorage`, falling back to `example.drawio` when no user default exists.
+- Updated UI copy, placeholders, and runtime toast messages to switch immediately with the selected language.
+- Updated favicon references across HTML metadata, manifest icons, and service-worker cache entries to use `assets/favicon/favicon.png`.
 
 ### Improved
 - Enhanced UI feedback with toast notifications and loading states for user actions.
 - Added zoom/pan enabled Draw.io viewer toolbar for easier diagram inspection.
+- Improved installation readiness for mobile/desktop browsers with full PWA meta/link tags.
 
 ### Fixed
 - Added AI response cleanup to strip markdown code fences before rendering returned XML.
 - Added retry logic for Gemini API requests to reduce transient network or rate-limit failures.
 - Fixed AI error handling when non-JSON error responses are returned by the API.
+- Fixed XML draft persistence timing by saving editor content to `localStorage` on every input and again before page unload.

@@ -1,0 +1,19 @@
+{
+    "name": "Draw.io AI Editor",
+    "short_name": "DrawIO AI",
+    "description": "A pure HTML Draw.io viewer and editor that supports viewing raw XML files and editing diagrams through Gemini AI conversations.",
+    "start_url": ".",
+    "scope": ".",
+    "display": "standalone",
+    "orientation": "any",
+    "theme_color": "#f1f5f9",
+    "background_color": "#ffffff",
+    "icons": [
+        {
+            "src": "assets/favicon/favicon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

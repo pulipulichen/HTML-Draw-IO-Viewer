@@ -1,0 +1,6 @@
+**/[[]trash
+.env
+.vscode
+node_modules/
+playwright-report/
+playwright-report-videos/

@@ -1,0 +1,8 @@
+{
+  "name": "html-draw-io-viewer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "sudo docker compose up --build --exit-code-from test-runner"
+  }
+}

@@ -11,6 +11,7 @@ function getRequiredElement(id) {
 export function getDomElements() {
     return {
         xmlInput: getRequiredElement("xmlInput"),
+        languageSelect: getRequiredElement("languageSelect"),
         urlInput: getRequiredElement("urlInput"),
         fetchBtn: getRequiredElement("fetchBtn"),
         dropzone: getRequiredElement("dropzone"),
