@@ -1,5 +1,7 @@
 const EMPTY_VIEW_HTML =
     '<div class="absolute inset-0 flex items-center justify-center text-slate-400">%EMPTY_MESSAGE%</div>';
+const DIAGRAM_HOST_SELECTOR = '[data-viewer-role="diagram-host"]';
+const EMPTY_VIEW_SELECTOR = '[data-viewer-role="empty-view"]';
 
 function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
@@ -231,6 +233,13 @@ function activatePanTool(diagramHost) {
     }
 }
 
+function removeRoleElement(viewerContainer, selector) {
+    const element = viewerContainer.querySelector(selector);
+    if (element instanceof HTMLElement) {
+        element.remove();
+    }
+}
+
 export function createDiagramViewer(viewerContainer, onRenderError, translate = (key, fallback = key) => fallback) {
     let teardownInteraction = null;
 
@@ -241,10 +250,16 @@ export function createDiagramViewer(viewerContainer, onRenderError, translate = 
                 teardownInteraction = null;
             }
 
-            viewerContainer.innerHTML = EMPTY_VIEW_HTML.replace(
+            removeRoleElement(viewerContainer, DIAGRAM_HOST_SELECTOR);
+            removeRoleElement(viewerContainer, EMPTY_VIEW_SELECTOR);
+
+            const emptyView = document.createElement("div");
+            emptyView.setAttribute("data-viewer-role", "empty-view");
+            emptyView.innerHTML = EMPTY_VIEW_HTML.replace(
                 "%EMPTY_MESSAGE%",
                 translate("viewer.empty", "No content to preview")
             );
+            viewerContainer.insertBefore(emptyView, viewerContainer.firstChild);
             return;
         }
 
@@ -254,12 +269,16 @@ export function createDiagramViewer(viewerContainer, onRenderError, translate = 
                 teardownInteraction = null;
             }
 
-            viewerContainer.innerHTML = "";
+            removeRoleElement(viewerContainer, DIAGRAM_HOST_SELECTOR);
+            removeRoleElement(viewerContainer, EMPTY_VIEW_SELECTOR);
 
             const diagramHost = document.createElement("div");
             diagramHost.className = "mxgraph";
+            diagramHost.setAttribute("data-viewer-role", "diagram-host");
             diagramHost.style.width = "100%";
             diagramHost.style.height = "100%";
+            diagramHost.style.position = "absolute";
+            diagramHost.style.inset = "0";
             diagramHost.style.display = "flex";
             diagramHost.style.alignItems = "center";
             diagramHost.style.justifyContent = "center";
@@ -278,7 +297,7 @@ export function createDiagramViewer(viewerContainer, onRenderError, translate = 
             };
 
             diagramHost.setAttribute("data-mxgraph", JSON.stringify(config));
-            viewerContainer.appendChild(diagramHost);
+            viewerContainer.insertBefore(diagramHost, viewerContainer.firstChild);
 
             if (
                 typeof window.GraphViewer !== "undefined" &&

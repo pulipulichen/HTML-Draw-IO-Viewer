@@ -22,6 +22,8 @@
 - Added preview-area region selection with a translucent selection box and crop capture workflow.
 - Added selected-region image preview in the AI panel and included that image in Gemini requests as multimodal context.
 - Added `Ctrl + Enter` submit shortcut inside the AI prompt textarea.
+- Added quick prompt links (`Org Chart` and `Adjust Colors`) beside the AI prompt label to instantly load example prompt text.
+- Added a one-click `Clear` action on the AI prompt header to reset current prompt input.
 
 ### Changed
 
@@ -41,6 +43,8 @@
 - Moved AI version history out of the AI editor panel into a dedicated `Versions` tab for cleaner task focus.
 - Updated preview interaction handling so pan/zoom is temporarily disabled while region-selection mode is active.
 - Replaced the AI section icon from a currency-style symbol to a pen-style edit icon for better semantic consistency.
+- Moved the `Ask AI to Generate/Modify` button to a sticky bottom position in the AI panel for more consistent access while scrolling.
+- Removed the unused `assets/favicon/favicon.svg` asset after standardizing favicon usage on `assets/favicon/favicon.png`.
 
 ### Improved
 

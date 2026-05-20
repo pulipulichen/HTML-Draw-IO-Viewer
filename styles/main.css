@@ -20,6 +20,11 @@
     user-select: none;
 }
 
+#viewerContainer[data-interaction-mode="select"] .mxgraph,
+#viewerContainer[data-interaction-mode="select"] .mxgraph * {
+    pointer-events: none !important;
+}
+
 /* 載入動畫轉圈圈 */
 .spinner {
     border: 3px solid rgba(255, 255, 255, 0.3);

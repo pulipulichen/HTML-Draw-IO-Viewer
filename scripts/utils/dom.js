@@ -23,6 +23,10 @@ export function getDomElements() {
         dropzone: getRequiredElement("dropzone"),
         fileInput: getRequiredElement("fileInput"),
         uploadBtn: getRequiredElement("uploadBtn"),
+        downloadXmlBtn: getRequiredElement("downloadXmlBtn"),
+        openInDrawioBtn: getRequiredElement("openInDrawioBtn"),
+        openDrawioLink: getRequiredElement("openDrawioLink"),
+        currentFileNameInput: getRequiredElement("currentFileNameInput"),
         formatBtn: getRequiredElement("formatBtn"),
         loadSampleBtn: getRequiredElement("loadSampleBtn"),
         viewerContainer: getRequiredElement("viewerContainer"),
@@ -53,8 +57,9 @@ export function getDomElements() {
         closeGeminiSettingsBtn: getRequiredElement("closeGeminiSettingsBtn"),
         cancelGeminiSettingsBtn: getRequiredElement("cancelGeminiSettingsBtn"),
         saveGeminiSettingsBtn: getRequiredElement("saveGeminiSettingsBtn"),
-        startSelectionBtn: getRequiredElement("startSelectionBtn"),
-        cancelSelectionBtn: getRequiredElement("cancelSelectionBtn"),
+        highlightModeSelect: getRequiredElement("highlightModeSelect"),
+        addHighlightBtn: getRequiredElement("addHighlightBtn"),
+        eraseHighlightBtn: getRequiredElement("eraseHighlightBtn"),
         selectionBox: getRequiredElement("selectionBox")
     };
 }

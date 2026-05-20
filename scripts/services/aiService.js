@@ -60,11 +60,15 @@ function buildReferenceContext(referenceFiles = []) {
     return `\n\n以下是可參考的附加檔案內容，請依需求酌量使用：\n${referencesText}`;
 }
 
-function buildUserPrompt(currentXml, prompt, referenceFiles = [], hasSelectedRegionImage = false) {
+function buildUserPrompt(currentXml, prompt, referenceFiles = [], hasHighlightContext = false) {
     const referenceContext = buildReferenceContext(referenceFiles);
     let selectedRegionHint = "";
-    if (hasSelectedRegionImage) {
-        selectedRegionHint = "\n\n另外我提供了一張「目前預覽中被框選區塊」的圖片。請優先根據這個區域來理解我想改哪一塊。";
+    if (hasHighlightContext) {
+        selectedRegionHint =
+            "\n\n另外我提供了兩張圖片：" +
+            "\n1) 目前整張圖表截圖（完整內容）" +
+            "\n2) 同一張圖但有標亮區域（代表希望優先修改處）" +
+            "\n請優先針對標亮處調整，但仍要保持整張圖的一致性。";
     }
 
     if (currentXml) {
@@ -74,22 +78,40 @@ function buildUserPrompt(currentXml, prompt, referenceFiles = [], hasSelectedReg
     return `請幫我產生一個全新的 Draw.io 圖表。使用者的需求：${prompt}${referenceContext}${selectedRegionHint}`;
 }
 
-function getInlineImagePart(selectedRegionImage) {
-    if (!selectedRegionImage?.dataUrl || !selectedRegionImage?.mimeType) {
+function toInlineImagePart(image) {
+    if (!image?.dataUrl || !image?.mimeType) {
         return null;
     }
 
-    const [, base64Data = ""] = selectedRegionImage.dataUrl.split(",", 2);
+    const [, base64Data = ""] = image.dataUrl.split(",", 2);
     if (!base64Data) {
         return null;
     }
 
     return {
         inline_data: {
-            mime_type: selectedRegionImage.mimeType,
+            mime_type: image.mimeType,
             data: base64Data
         }
     };
+}
+
+function getInlineImageParts(highlightContext) {
+    if (!highlightContext) {
+        return [];
+    }
+
+    const parts = [];
+    const fullImagePart = toInlineImagePart(highlightContext.fullImage);
+    const highlightedImagePart = toInlineImagePart(highlightContext.highlightedImage || highlightContext);
+
+    if (fullImagePart) {
+        parts.push(fullImagePart);
+    }
+    if (highlightedImagePart) {
+        parts.push(highlightedImagePart);
+    }
+    return parts;
 }
 
 function sanitizeXmlText(resultText) {
@@ -133,10 +155,7 @@ export async function requestAiXml({
     const userPrompt = buildUserPrompt(currentXml, prompt, referenceFiles, hasSelectedRegionImage);
     const systemPrompt = await loadSystemPrompt();
     const contentParts = [{ text: userPrompt }];
-    const inlineImagePart = getInlineImagePart(selectedRegionImage);
-    if (inlineImagePart) {
-        contentParts.push(inlineImagePart);
-    }
+    contentParts.push(...getInlineImageParts(selectedRegionImage));
     const payload = {
         contents: [{ parts: contentParts }],
         systemInstruction: { parts: [{ text: systemPrompt }] }
