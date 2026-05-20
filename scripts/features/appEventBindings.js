@@ -95,14 +95,14 @@ function resolveSvgExportDimensions(svgElement) {
 
 function resolveHighResolutionExportDimensions(baseWidth, baseHeight, sourceFormat) {
     const isMermaid = sourceFormat.includes("mermaid");
-    const baseScale = isMermaid ? 4 : 3;
-    const minWidth = isMermaid ? 1600 : 1400;
-    const minHeight = 1000;
+    const baseScale = isMermaid ? 6 : 6;
+    const minLongEdge = isMermaid ? 3000 : 3000;
     const safeWidth = Math.max(1, baseWidth);
     const safeHeight = Math.max(1, baseHeight);
 
     let scale = baseScale;
-    scale = Math.max(scale, minWidth / safeWidth, minHeight / safeHeight);
+    const currentLongEdge = Math.max(safeWidth, safeHeight);
+    scale = Math.max(scale, minLongEdge / currentLongEdge);
 
     let width = Math.max(1, Math.round(safeWidth * scale));
     let height = Math.max(1, Math.round(safeHeight * scale));
@@ -135,6 +135,52 @@ function stripCrossOriginImageNodes(svgElement) {
         const normalizedHref = String(href).trim().toLowerCase();
         if (normalizedHref.startsWith("http://") || normalizedHref.startsWith("https://")) {
             imageNode.remove();
+        }
+    });
+}
+
+function sanitizeSvgForCanvasExport(svgElement) {
+    // Remove <style> nodes that reference external resources (@font-face / @import)
+    // since loading them while rasterizing the SVG taints the canvas and blocks
+    // toBlob/toDataURL. We can safely drop these because Draw.io and Mermaid
+    // both inline their visual styling either via attributes or simpler rules.
+    const styleNodes = Array.from(svgElement.querySelectorAll("style"));
+    styleNodes.forEach((styleNode) => {
+        const css = String(styleNode.textContent || "");
+        const referencesExternal =
+            /@font-face/i.test(css) ||
+            /@import/i.test(css) ||
+            /url\(\s*['"]?https?:/i.test(css);
+        if (referencesExternal) {
+            styleNode.remove();
+        }
+    });
+
+    const elementsWithExternalRefs = Array.from(
+        svgElement.querySelectorAll("[href], [*|href]")
+    );
+    elementsWithExternalRefs.forEach((node) => {
+        const candidateHrefs = [
+            node.getAttribute("href"),
+            node.getAttribute("xlink:href"),
+            node.getAttributeNS("http://www.w3.org/1999/xlink", "href")
+        ];
+        const isExternal = candidateHrefs.some((value) => {
+            const normalized = String(value || "").trim().toLowerCase();
+            return (
+                normalized.startsWith("http://") ||
+                normalized.startsWith("https://") ||
+                normalized.startsWith("//")
+            );
+        });
+        if (isExternal) {
+            node.removeAttribute("href");
+            node.removeAttribute("xlink:href");
+            try {
+                node.removeAttributeNS("http://www.w3.org/1999/xlink", "href");
+            } catch (_error) {
+                // Ignore: not all environments support removeAttributeNS uniformly.
+            }
         }
     });
 }
@@ -343,11 +389,15 @@ function removeFullCanvasBackgroundRect(svgElement, fallbackWidth, fallbackHeigh
 
 function buildTransparentSvgMarkup(sourceSvg, options = {}) {
     const { targetWidth = null, targetHeight = null } = options;
-    const { width: fallbackWidth, height: fallbackHeight } = resolveSvgExportDimensions(sourceSvg);
-    const effectiveWidth =
-        Math.max(1, Math.floor(parseNumericAttribute(targetWidth) || fallbackWidth || 1));
-    const effectiveHeight =
-        Math.max(1, Math.floor(parseNumericAttribute(targetHeight) || fallbackHeight || 1));
+    const { width: naturalWidth, height: naturalHeight } = resolveSvgExportDimensions(sourceSvg);
+    const renderWidth = Math.max(
+        1,
+        Math.floor(parseNumericAttribute(targetWidth) || naturalWidth || 1)
+    );
+    const renderHeight = Math.max(
+        1,
+        Math.floor(parseNumericAttribute(targetHeight) || naturalHeight || 1)
+    );
     const exportSvg = sourceSvg.cloneNode(true);
 
     if (!isSvgElement(exportSvg)) {
@@ -364,33 +414,27 @@ function buildTransparentSvgMarkup(sourceSvg, options = {}) {
         exportSvg.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
     }
 
+    // Ensure the viewBox uses the SVG's natural coordinate system so the
+    // existing content keeps its proportions, then enlarge width/height so the
+    // browser rasterizes the SVG at high resolution when loaded via <img>.
     if (!exportSvg.getAttribute("viewBox")) {
-        exportSvg.setAttribute("viewBox", `0 0 ${fallbackWidth} ${fallbackHeight}`);
+        exportSvg.setAttribute("viewBox", `0 0 ${naturalWidth} ${naturalHeight}`);
     }
-    exportSvg.setAttribute("width", String(effectiveWidth));
-    exportSvg.setAttribute("height", String(effectiveHeight));
+    exportSvg.setAttribute("width", String(renderWidth));
+    exportSvg.setAttribute("height", String(renderHeight));
+    exportSvg.setAttribute("preserveAspectRatio", "xMidYMid meet");
 
     stripCrossOriginImageNodes(exportSvg);
-    removeFullCanvasBackgroundRect(exportSvg, effectiveWidth, effectiveHeight);
+    sanitizeSvgForCanvasExport(exportSvg);
+    removeFullCanvasBackgroundRect(exportSvg, naturalWidth, naturalHeight);
     return new XMLSerializer().serializeToString(exportSvg);
 }
 
 async function drawSvgBlobToCanvas(canvas, context, svgBlob) {
-    const renderFromBitmap = async () => {
-        if (typeof window.createImageBitmap !== "function") {
-            throw new Error("createImageBitmap unavailable");
-        }
-        const bitmap = await window.createImageBitmap(svgBlob);
-        try {
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-        } finally {
-            if (typeof bitmap.close === "function") {
-                bitmap.close();
-            }
-        }
-    };
-
+    // We intentionally avoid createImageBitmap here. Some browsers rasterize the
+    // SVG once at a low intrinsic size and then drawImage upscales that bitmap,
+    // producing blurry output. Using an <img> element keeps the SVG as a vector
+    // source so drawImage can rasterize it directly at the target canvas size.
     const renderFromUrl = async (url) => {
         const image = new Image();
         image.decoding = "sync";
@@ -400,15 +444,10 @@ async function drawSvgBlobToCanvas(canvas, context, svgBlob) {
             image.onerror = reject;
         });
         context.clearRect(0, 0, canvas.width, canvas.height);
+        context.imageSmoothingEnabled = true;
+        context.imageSmoothingQuality = "high";
         context.drawImage(image, 0, 0, canvas.width, canvas.height);
     };
-
-    try {
-        await renderFromBitmap();
-        return;
-    } catch (_bitmapError) {
-        // Continue with URL-based fallback.
-    }
 
     const objectUrl = URL.createObjectURL(svgBlob);
     try {
@@ -452,6 +491,13 @@ async function exportDiagramAsTransparentPng({ dom, fileNameManager, toast, t })
             targetHeight: exportHeight
         });
         const svgBlob = new Blob([svgMarkup], { type: "image/svg+xml;charset=utf-8" });
+        console.debug("[PNG export]", {
+            baseExportWidth,
+            baseExportHeight,
+            exportWidth,
+            exportHeight,
+            sourceFormat
+        });
 
         const canvas = document.createElement("canvas");
         canvas.width = exportWidth;
@@ -477,68 +523,109 @@ async function exportDiagramAsTransparentPng({ dom, fileNameManager, toast, t })
                 trimPadding,
                 2
             );
+            console.debug("[PNG export] trimmed", {
+                canvas: { width: canvas.width, height: canvas.height },
+                trimmed: { width: trimmedCanvas.width, height: trimmedCanvas.height }
+            });
             try {
                 // Keep canvas alpha channel untouched to export transparent background PNG.
                 pngBlob = await canvasToPngBlob(trimmedCanvas);
-            } catch (_canvasExportError) {
+                console.debug("[PNG export] main path produced blob", {
+                    bytes: pngBlob?.size
+                });
+            } catch (canvasExportError) {
+                console.warn("[PNG export] canvas.toBlob failed:", canvasExportError);
                 pngBlob = null;
             }
         }
 
         if (!pngBlob) {
+            console.warn("[PNG export] main path produced no blob, using fallback renderer");
             try {
                 const module = await loadHtmlToImageModule();
-                const width = Math.max(1, Math.floor(exportWidth || sourceSvg.clientWidth || 1));
-                const height = Math.max(1, Math.floor(exportHeight || sourceSvg.clientHeight || 1));
-                if (typeof module?.toBlob === "function") {
-                    pngBlob = await module.toBlob(sourceSvg, {
-                        cacheBust: true,
-                        backgroundColor: "rgba(0,0,0,0)",
-                        pixelRatio: 1,
-                        width,
-                        height,
-                        canvasWidth: width,
-                        canvasHeight: height,
-                        skipAutoScale: true,
-                        style: {
-                            transform: "none",
-                            background: "transparent",
-                            backgroundColor: "transparent"
-                        }
-                    });
+                // Render the enlarged stand-alone SVG markup off-screen instead of the
+                // live DOM SVG (which is currently transformed by pan/zoom). This keeps
+                // the fallback at the same high resolution as the main path.
+                const offscreenHost = document.createElement("div");
+                offscreenHost.style.position = "fixed";
+                offscreenHost.style.left = "-99999px";
+                offscreenHost.style.top = "0";
+                offscreenHost.style.pointerEvents = "none";
+                offscreenHost.style.background = "transparent";
+                offscreenHost.style.width = `${exportWidth}px`;
+                offscreenHost.style.height = `${exportHeight}px`;
+                offscreenHost.innerHTML = svgMarkup;
+                document.body.appendChild(offscreenHost);
+                const offscreenSvg = offscreenHost.querySelector("svg");
+                if (offscreenSvg instanceof Element) {
+                    offscreenSvg.setAttribute("width", String(exportWidth));
+                    offscreenSvg.setAttribute("height", String(exportHeight));
+                    offscreenSvg.style.width = `${exportWidth}px`;
+                    offscreenSvg.style.height = `${exportHeight}px`;
                 }
-                if (!pngBlob && typeof module?.toPng === "function") {
-                    const dataUrl = await module.toPng(sourceSvg, {
-                        cacheBust: true,
-                        backgroundColor: "rgba(0,0,0,0)",
-                        pixelRatio: 1,
-                        width,
-                        height,
-                        canvasWidth: width,
-                        canvasHeight: height,
-                        skipAutoScale: true
-                    });
-                    pngBlob = await dataUrlToBlob(dataUrl);
+                try {
+                    if (offscreenSvg && typeof module?.toBlob === "function") {
+                        pngBlob = await module.toBlob(offscreenSvg, {
+                            cacheBust: true,
+                            backgroundColor: "rgba(0,0,0,0)",
+                            pixelRatio: 1,
+                            width: exportWidth,
+                            height: exportHeight,
+                            canvasWidth: exportWidth,
+                            canvasHeight: exportHeight,
+                            skipAutoScale: true,
+                            style: {
+                                transform: "none",
+                                background: "transparent",
+                                backgroundColor: "transparent"
+                            }
+                        });
+                    }
+                    if (!pngBlob && offscreenSvg && typeof module?.toPng === "function") {
+                        const dataUrl = await module.toPng(offscreenSvg, {
+                            cacheBust: true,
+                            backgroundColor: "rgba(0,0,0,0)",
+                            pixelRatio: 1,
+                            width: exportWidth,
+                            height: exportHeight,
+                            canvasWidth: exportWidth,
+                            canvasHeight: exportHeight,
+                            skipAutoScale: true
+                        });
+                        pngBlob = await dataUrlToBlob(dataUrl);
+                    }
+                } finally {
+                    offscreenHost.remove();
                 }
-            } catch (_fallbackError) {
+                console.debug("[PNG export] fallback produced blob", {
+                    bytes: pngBlob?.size
+                });
+            } catch (fallbackError) {
+                console.warn("[PNG export] fallback renderer failed:", fallbackError);
                 pngBlob = null;
             }
         }
 
         if (pngBlob) {
             try {
+                const before = pngBlob;
                 pngBlob = await normalizePngBlobBounds(pngBlob, {
                     padding: trimPadding,
                     alphaThreshold: 2
                 });
-            } catch (_normalizeError) {
-                // Keep original blob if normalization fails.
+                console.debug("[PNG export] normalized", {
+                    beforeBytes: before.size,
+                    afterBytes: pngBlob?.size
+                });
+            } catch (normalizeError) {
+                console.warn("[PNG export] normalize failed:", normalizeError);
             }
         }
 
         if (!pngBlob) {
             throw new Error("png encoding failed");
         }
+        console.debug("[PNG export] final blob bytes:", pngBlob.size);
 
         const pngUrl = URL.createObjectURL(pngBlob);
         const anchor = document.createElement("a");
