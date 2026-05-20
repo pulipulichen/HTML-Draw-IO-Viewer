@@ -26,6 +26,7 @@
 - Updated per-version mode badge text to compact labels (`DrawIO` / `Mermaid`) for faster scanning.
 - Updated Versions card header layout so `Restore this version` is rendered on its own row.
 - Removed the redundant top-level current-mode badge from the Versions tab to avoid duplicate mode indicators.
+- Updated dependency directory tracking to keep `node_modules` ignored in Git and use the external `/deps/node_modules` symlink target.
 
 ### Fixed
 
