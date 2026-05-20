@@ -9,7 +9,7 @@
 
 ## 功能特色
 
-- 支援從本機 `.drawio` / `.xml` 檔、XML 網址或內建範例載入圖表。
+- 支援從本機 `.drawio` / `.xml` / `.mmd` / `.mermaid` 檔、XML 網址或內建範例（`demo/example.drawio`、`demo/example.mmd`）載入圖表。
 - XML 即時預覽，支援平移、縮放與 minimap 導覽。
 - 可透過自然語言請 Gemini 產生或修改圖表 XML。
 - 支援標亮區域（矩形、多邊形、手繪）並作為 Gemini 的視覺上下文。
@@ -46,7 +46,8 @@
 
 ## 基本使用流程
 
-1. 先從範例、本機檔案或網址載入 XML。
+1. 先從範例、本機檔案或網址載入圖表內容。
+   - 若要載入 Mermaid 範例：先把來源格式切到 `Mermaid`，再按「載入範例 XML」。
 2. 在原始碼區直接編輯 XML，右側即時預覽。
 3. 到 **Gemini 設定** 填入 Gemini API Key 與模型名稱。
 4. 在 AI 分頁輸入提示詞（可選擇附加參考檔與標亮快照）。

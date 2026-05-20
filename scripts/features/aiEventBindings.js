@@ -16,10 +16,11 @@ export function registerAiEvents(options) {
         captureHistoryThumbnail,
         setAiLoading,
         openGeminiSettingsModal,
-        persistGeminiSettings
+        persistGeminiSettings,
+        getCurrentSourceFormat
     } = options;
     const AI_DEMO_PROMPT = "翻譯成英文";
-    const AI_DEMO_FILE_PATH = "./example2.drawio";
+    const AI_DEMO_FILE_PATH = "./demo/example2.drawio";
 
     dom.aiTabPanel.addEventListener("click", (event) => {
         let target = null;
@@ -56,6 +57,7 @@ export function registerAiEvents(options) {
     const submitAiPrompt = async () => {
         const prompt = dom.aiPrompt.value.trim();
         const currentXml = dom.xmlInput.value.trim();
+        const currentSourceFormat = getCurrentSourceFormat();
         const apiKey = dom.apiKeyInput.value.trim() || envApiKey;
         const model = dom.modelInput.value.trim() || defaultModelName;
 
@@ -85,7 +87,8 @@ export function registerAiEvents(options) {
                 apiKey,
                 model,
                 referenceFiles,
-                selectedRegionImage: usedSelectedRegionImage
+                selectedRegionImage: usedSelectedRegionImage,
+                sourceFormat: currentSourceFormat
             });
 
             fillXmlAndRender(resultXml);
@@ -110,7 +113,70 @@ export function registerAiEvents(options) {
         }
     };
 
+    const submitMermaidToDrawioConversion = async () => {
+        const currentSourceText = dom.xmlInput.value.trim();
+        const apiKey = dom.apiKeyInput.value.trim() || envApiKey;
+        const model = dom.modelInput.value.trim() || defaultModelName;
+        const currentSourceFormat = getCurrentSourceFormat();
+
+        if (!currentSourceText) {
+            toast.show(t("toast.noDiagramToSelect"), true);
+            return;
+        }
+
+        if (currentSourceFormat !== "mermaid") {
+            toast.show(t("toast.mermaidOnlyConversion"), true);
+            return;
+        }
+
+        if (!apiKey) {
+            toast.show(t("toast.apiKeyRequired"), true);
+            openGeminiSettingsModal();
+            dom.apiKeyInput.focus();
+            return;
+        }
+
+        dom.modelInput.value = model;
+        persistGeminiSettings();
+
+        const conversionPrompt =
+            "請把以下 Mermaid 圖表語法完整轉換成 Draw.io (mxGraph) XML，保持流程、連線關係與節點語意一致。若 Mermaid 有 subgraph，請在 Draw.io 以群組或容器呈現。\n\n" +
+            currentSourceText;
+
+        setAiLoading(true);
+        try {
+            const resultXml = await requestAiXml({
+                prompt: conversionPrompt,
+                currentXml: "",
+                apiKey,
+                model,
+                referenceFiles: [],
+                selectedRegionImage: null,
+                sourceFormat: "mermaid"
+            });
+
+            fillXmlAndRender(resultXml, { sourceFormatHint: "drawio" });
+            fileNameManager.markAiEdited();
+            const thumbnailDataUrl = await captureHistoryThumbnail();
+            aiHistoryController.addEntry({
+                prompt: t("history.mermaidConvertPrompt", "Convert Mermaid to Draw.io"),
+                resultXml,
+                referenceFiles: [],
+                usedSelectedRegionImage: null,
+                fileName: fileNameManager.getEffectiveExportFileName(),
+                thumbnailDataUrl
+            });
+            toast.show(t("toast.mermaidConverted"));
+        } catch (error) {
+            console.error("Mermaid 轉換失敗:", error);
+            toast.show(`${t("toast.aiRequestFailed")}: ${error.message}`, true);
+        } finally {
+            setAiLoading(false);
+        }
+    };
+
     dom.askAiBtn.addEventListener("click", submitAiPrompt);
+    dom.convertMermaidBtn.addEventListener("click", submitMermaidToDrawioConversion);
     dom.aiDemoBtn.addEventListener("click", async () => {
         setAiLoading(true);
         try {

@@ -9,7 +9,7 @@ It combines the Draw.io viewer with Gemini-powered prompt editing, highlighted-r
 
 ## Features
 
-- Load diagrams from local `.drawio` / `.xml` files, XML URLs, or built-in sample XML.
+- Load diagrams from local `.drawio` / `.xml` / `.mmd` / `.mermaid` files, XML URLs, or built-in samples (`demo/example.drawio`, `demo/example.mmd`).
 - Live XML preview with pan/zoom interaction and a minimap navigator.
 - Ask Gemini to generate or modify diagram XML from natural language prompts.
 - Add highlighted regions (rectangle, polygon, freehand) and send them to Gemini as visual context.
@@ -46,7 +46,8 @@ It combines the Draw.io viewer with Gemini-powered prompt editing, highlighted-r
 
 ## Basic Usage
 
-1. Load diagram XML from sample, local file, or URL.
+1. Load diagram source from sample, local file, or URL.
+   - To load Mermaid sample from UI: switch source format to `Mermaid`, then click `Load Sample XML`.
 2. Edit XML directly in the source panel and preview updates live.
 3. Open **Gemini Settings** and provide your Gemini API key/model.
 4. Enter a prompt in the AI tab (optionally attach references and highlighted snapshots).

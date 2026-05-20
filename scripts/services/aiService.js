@@ -60,7 +60,13 @@ function buildReferenceContext(referenceFiles = []) {
     return `\n\n以下是可參考的附加檔案內容，請依需求酌量使用：\n${referencesText}`;
 }
 
-function buildUserPrompt(currentXml, prompt, referenceFiles = [], hasHighlightContext = false) {
+function buildUserPrompt(
+    currentXml,
+    prompt,
+    referenceFiles = [],
+    hasHighlightContext = false,
+    sourceFormat = "drawio"
+) {
     const referenceContext = buildReferenceContext(referenceFiles);
     let selectedRegionHint = "";
     if (hasHighlightContext) {
@@ -72,6 +78,9 @@ function buildUserPrompt(currentXml, prompt, referenceFiles = [], hasHighlightCo
     }
 
     if (currentXml) {
+        if (sourceFormat === "mermaid") {
+            return `這是我目前的 Mermaid 語法:\n\n${currentXml}\n\n請根據需求產生對應的 Draw.io XML。使用者的需求：${prompt}${referenceContext}${selectedRegionHint}`;
+        }
         return `這是我目前的 Draw.io XML 程式碼:\n\n${currentXml}\n\n使用者的修改需求：${prompt}${referenceContext}${selectedRegionHint}`;
     }
 
@@ -148,11 +157,18 @@ export async function requestAiXml({
     apiKey,
     model,
     referenceFiles = [],
-    selectedRegionImage = null
+    selectedRegionImage = null,
+    sourceFormat = "drawio"
 }) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
     const hasSelectedRegionImage = Boolean(selectedRegionImage);
-    const userPrompt = buildUserPrompt(currentXml, prompt, referenceFiles, hasSelectedRegionImage);
+    const userPrompt = buildUserPrompt(
+        currentXml,
+        prompt,
+        referenceFiles,
+        hasSelectedRegionImage,
+        sourceFormat
+    );
     const systemPrompt = await loadSystemPrompt();
     const contentParts = [{ text: userPrompt }];
     contentParts.push(...getInlineImageParts(selectedRegionImage));

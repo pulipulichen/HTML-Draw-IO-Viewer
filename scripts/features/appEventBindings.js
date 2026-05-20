@@ -22,11 +22,17 @@ export function registerInputEvents(options) {
         loadExampleXml,
         fillXmlAndRender,
         fileNameManager,
-        onSampleLoaded = async () => {}
+        onSampleLoaded = async () => {},
+        setSourceFormatHint = () => {}
     } = options;
 
     dom.xmlInput.addEventListener("input", () => {
         writeStoredValue(storageKeys.diagramXml, dom.xmlInput.value);
+    });
+
+    dom.sourceFormatSelect.addEventListener("change", () => {
+        writeStoredValue(storageKeys.sourceFormat, dom.sourceFormatSelect.value);
+        render(dom.xmlInput.value);
     });
 
     window.addEventListener("beforeunload", () => {
@@ -64,10 +70,13 @@ export function registerInputEvents(options) {
 
         window.setTimeout(async () => {
             try {
-                const exampleXml = await loadExampleXml();
-                fillXmlAndRender(exampleXml);
-                fileNameManager.setSourceFileName("example.drawio");
-                await onSampleLoaded(exampleXml);
+                const preferredFormat =
+                    dom.sourceFormatSelect.value === "mermaid" ? "mermaid" : "drawio";
+                const sample = await loadExampleXml(preferredFormat);
+                setSourceFormatHint(sample.sourceFormatHint);
+                fillXmlAndRender(sample.content, { sourceFormatHint: sample.sourceFormatHint });
+                fileNameManager.setSourceFileName(sample.fileName);
+                await onSampleLoaded(sample.content);
                 toast.show(t("toast.sampleLoaded"));
             } catch (_error) {
                 toast.show(t("toast.sampleLoadFailed"), true);
@@ -188,7 +197,8 @@ export function registerFileEvents(options) {
         isSupportedDiagramFile,
         readTextFile,
         fillXmlAndRender,
-        fileNameManager
+        fileNameManager,
+        onFileLoaded = () => {}
     } = options;
 
     async function handleFile(file) {
@@ -199,6 +209,7 @@ export function registerFileEvents(options) {
 
         try {
             const text = await readTextFile(file);
+            onFileLoaded(file, text);
             fillXmlAndRender(text);
             fileNameManager.setSourceFileName(file.name);
             toast.show(`${t("toast.fileLoaded")}: ${file.name}`);

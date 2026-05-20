@@ -1,5 +1,11 @@
 export function isSupportedDiagramFile(fileName) {
-    return fileName.endsWith(".xml") || fileName.endsWith(".drawio");
+    const normalizedName = String(fileName || "").toLowerCase();
+    return (
+        normalizedName.endsWith(".xml") ||
+        normalizedName.endsWith(".drawio") ||
+        normalizedName.endsWith(".mmd") ||
+        normalizedName.endsWith(".mermaid")
+    );
 }
 
 export function readTextFile(file) {

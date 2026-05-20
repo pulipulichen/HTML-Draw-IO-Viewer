@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.0.2
+
+### Added
+
+- Added Mermaid source preview support with format-aware rendering (`auto`, `drawio`, `mermaid`) and runtime Mermaid module loading.
+- Added source format selector in the editor toolbar to explicitly switch preview mode.
+- Added Mermaid-to-Draw.io AI conversion action in the AI panel for one-click transformation workflow.
+- Added Mermaid sample assets and moved all sample files under `demo/` (`example.drawio`, `example2.drawio`, `example.mmd`, `example2.mmd`).
+- Added Mermaid E2E coverage in `e2e/mermaid.spec.js` for Mermaid render path and `.mmd` file import behavior.
+- Added `sourceFormat` persistence in `localStorage` to keep user format preference across reloads.
+
+### Changed
+
+- Updated sample loading behavior so `Load Sample` now follows current source format (`Draw.io` loads `demo/example.drawio`, `Mermaid` loads `demo/example.mmd`).
+- Updated sample/demo file paths used by runtime logic (startup sample load, AI demo load, service-worker cache list, and E2E file paths) to the `demo/` directory.
+- Updated import support to include Mermaid file extensions (`.mmd`, `.mermaid`).
+- Updated AI prompt assembly to support Mermaid-origin editing context while still returning Draw.io XML.
+- Refactored viewer architecture into feature-focused modules under `scripts/core/viewer/` (`createDiagramViewer`, `renderEngine`, `panZoom`, `format`) and kept `scripts/core/viewer.js` as stable re-export.
+- Refactored app startup/event orchestration out of `scripts/main.js` into `scripts/features/appLifecycle.js` and isolated source-format state logic in `scripts/features/sourceFormatController.js`.
+- Updated sample button text from `Load Sample XML` to `Load Sample` (and corresponding Traditional Chinese text).
+
+### Fixed
+
+- Fixed Mermaid preview failures for pasted Markdown fenced code blocks by normalizing Mermaid input before rendering.
+- Fixed Mermaid `Syntax error in text` rendering cases by adding pre-render Mermaid parse validation and defensive error handling for error-markup SVG output.
+
 ## 0.0.1
 
 ### Added

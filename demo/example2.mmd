@@ -1,0 +1,18 @@
+flowchart LR
+    subgraph Frontend
+        UI[Web UI]
+        Store[State Store]
+    end
+
+    subgraph Backend
+        API[REST API]
+        Auth[Auth Service]
+        DB[(Database)]
+    end
+
+    UI -->|request| API
+    API --> Auth
+    API --> DB
+    Auth --> DB
+    API -->|response| UI
+    UI --> Store
