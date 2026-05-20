@@ -1,6 +1,6 @@
 /* global self, caches */
 
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
 const APP_CACHE = `drawio-ai-editor-${CACHE_VERSION}`;
 const APP_SHELL_FILES = [
     "./",
@@ -48,6 +48,35 @@ self.addEventListener("fetch", (event) => {
         return;
     }
 
+    const requestUrl = new URL(event.request.url);
+    const isSameOrigin = requestUrl.origin === self.location.origin;
+
+    // Keep app scripts/styles fresh; fallback to cache when offline.
+    if (isSameOrigin) {
+        event.respondWith(
+            fetch(event.request)
+                .then((networkResponse) => {
+                    const responseToCache = networkResponse.clone();
+                    caches.open(APP_CACHE).then((cache) => cache.put(event.request, responseToCache));
+                    return networkResponse;
+                })
+                .catch(() =>
+                    caches.match(event.request).then((cachedResponse) => {
+                        if (cachedResponse) {
+                            return cachedResponse;
+                        }
+
+                        if (event.request.mode === "navigate") {
+                            return caches.match("./index.html");
+                        }
+
+                        return new Response("", { status: 503, statusText: "Offline" });
+                    })
+                )
+        );
+        return;
+    }
+
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
             if (cachedResponse) {
@@ -56,11 +85,6 @@ self.addEventListener("fetch", (event) => {
 
             return fetch(event.request)
                 .then((networkResponse) => {
-                    const requestUrl = new URL(event.request.url);
-                    if (requestUrl.origin === self.location.origin) {
-                        const responseToCache = networkResponse.clone();
-                        caches.open(APP_CACHE).then((cache) => cache.put(event.request, responseToCache));
-                    }
                     return networkResponse;
                 })
                 .catch(() => {

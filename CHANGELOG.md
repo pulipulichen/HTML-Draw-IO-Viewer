@@ -38,3 +38,5 @@
 - Added retry logic for Gemini API requests to reduce transient network or rate-limit failures.
 - Fixed AI error handling when non-JSON error responses are returned by the API.
 - Fixed XML draft persistence timing by saving editor content to `localStorage` on every input and again before page unload.
+- Fixed Docker-based Playwright module resolution by linking `/app/node_modules` to `/deps/node_modules`, preventing `ERR_MODULE_NOT_FOUND` for `@playwright/test` in ESM config/spec imports.
+- Fixed the i18n persistence E2E scenario by replacing `page.addInitScript` with one-time `localStorage` setup before reload, so language state assertions no longer reset to `en` on every navigation.

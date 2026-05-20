@@ -53,11 +53,12 @@ test("persists selected language after reload", async ({ page }) => {
         }
     });
 
-    await page.addInitScript((storageKey) => {
+    await page.goto("/");
+    await page.evaluate((storageKey) => {
         window.localStorage.setItem(storageKey, "en");
     }, LANGUAGE_KEY);
+    await page.reload();
 
-    await page.goto("/");
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
     await expect(page.locator("#languageSelect")).toHaveValue("en");
 

@@ -6,14 +6,7 @@ function clamp(value, min, max) {
 }
 
 function setupMousePanZoom(viewerContainer, diagramHost) {
-    const transformTarget =
-        diagramHost.querySelector(".geDiagramContainer") ||
-        diagramHost.querySelector(".mxGraphContainer") ||
-        diagramHost.firstElementChild;
-
-    if (!(transformTarget instanceof HTMLElement)) {
-        return () => {};
-    }
+    let transformTarget = null;
 
     let scale = 1;
     let offsetX = 0;
@@ -26,13 +19,41 @@ function setupMousePanZoom(viewerContainer, diagramHost) {
     const minScale = 0.25;
     const maxScale = 4;
 
-    transformTarget.style.transformOrigin = "0 0";
-    transformTarget.style.willChange = "transform";
     viewerContainer.style.cursor = "grab";
     viewerContainer.style.touchAction = "none";
 
+    const resolveTransformTarget = () => {
+        if (transformTarget instanceof HTMLElement && transformTarget.isConnected) {
+            return transformTarget;
+        }
+
+        const svgElement = diagramHost.querySelector("svg");
+        const svgContainer = svgElement?.parentElement;
+        const discoveredTarget =
+            diagramHost.querySelector(".geDiagramContainer") ||
+            diagramHost.querySelector(".mxGraphContainer") ||
+            (svgContainer instanceof HTMLElement ? svgContainer : null) ||
+            diagramHost.firstElementChild ||
+            diagramHost;
+
+        if (!(discoveredTarget instanceof HTMLElement)) {
+            return null;
+        }
+
+        transformTarget = discoveredTarget;
+        transformTarget.style.transformOrigin = "0 0";
+        transformTarget.style.willChange = "transform";
+
+        return transformTarget;
+    };
+
     const applyTransform = () => {
-        transformTarget.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+        const target = resolveTransformTarget();
+        if (!(target instanceof HTMLElement)) {
+            return;
+        }
+
+        target.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
     };
 
     const onWheel = (event) => {
@@ -66,6 +87,10 @@ function setupMousePanZoom(viewerContainer, diagramHost) {
             return;
         }
 
+        if (event.target instanceof Element && event.target.closest(".geToolbarContainer")) {
+            return;
+        }
+
         isDragging = true;
         dragPointerId = event.pointerId;
         startX = event.clientX - offsetX;
@@ -83,6 +108,7 @@ function setupMousePanZoom(viewerContainer, diagramHost) {
         offsetX = event.clientX - startX;
         offsetY = event.clientY - startY;
         applyTransform();
+        event.preventDefault();
     };
 
     const releaseDragState = (event) => {
@@ -98,22 +124,28 @@ function setupMousePanZoom(viewerContainer, diagramHost) {
         }
     };
 
-    viewerContainer.addEventListener("wheel", onWheel, { passive: false });
-    viewerContainer.addEventListener("pointerdown", onPointerDown);
-    viewerContainer.addEventListener("pointermove", onPointerMove);
-    viewerContainer.addEventListener("pointerup", releaseDragState);
-    viewerContainer.addEventListener("pointercancel", releaseDragState);
-    viewerContainer.addEventListener("pointerleave", releaseDragState);
+    const eventTarget = diagramHost;
+    const observer = new MutationObserver(() => {
+        applyTransform();
+    });
+
+    observer.observe(diagramHost, { childList: true, subtree: true });
+
+    eventTarget.addEventListener("wheel", onWheel, { passive: false, capture: true });
+    eventTarget.addEventListener("pointerdown", onPointerDown, { capture: true });
+    window.addEventListener("pointermove", onPointerMove, { capture: true });
+    window.addEventListener("pointerup", releaseDragState, { capture: true });
+    window.addEventListener("pointercancel", releaseDragState, { capture: true });
 
     applyTransform();
 
     return () => {
-        viewerContainer.removeEventListener("wheel", onWheel);
-        viewerContainer.removeEventListener("pointerdown", onPointerDown);
-        viewerContainer.removeEventListener("pointermove", onPointerMove);
-        viewerContainer.removeEventListener("pointerup", releaseDragState);
-        viewerContainer.removeEventListener("pointercancel", releaseDragState);
-        viewerContainer.removeEventListener("pointerleave", releaseDragState);
+        observer.disconnect();
+        eventTarget.removeEventListener("wheel", onWheel, true);
+        eventTarget.removeEventListener("pointerdown", onPointerDown, true);
+        window.removeEventListener("pointermove", onPointerMove, true);
+        window.removeEventListener("pointerup", releaseDragState, true);
+        window.removeEventListener("pointercancel", releaseDragState, true);
         viewerContainer.style.cursor = "";
         viewerContainer.style.touchAction = "";
     };
@@ -171,7 +203,8 @@ export function createDiagramViewer(viewerContainer, onRenderError, translate = 
                 center: true,
                 zoomWheel: true,
                 pan: true,
-                toolbar: "zoom pan lightbox",
+                lightbox: false,
+                toolbar: "zoom pan",
                 xml: xmlString
             };
 
