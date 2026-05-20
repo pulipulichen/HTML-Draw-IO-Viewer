@@ -45,12 +45,51 @@ async function fetchWithRetry(url, options, maxRetries = 5) {
     throw new Error("AI 請求失敗");
 }
 
-function buildUserPrompt(currentXml, prompt) {
-    if (currentXml) {
-        return `這是我目前的 Draw.io XML 程式碼:\n\n${currentXml}\n\n使用者的修改需求：${prompt}`;
+function buildReferenceContext(referenceFiles = []) {
+    if (!referenceFiles.length) {
+        return "";
     }
 
-    return `請幫我產生一個全新的 Draw.io 圖表。使用者的需求：${prompt}`;
+    const referencesText = referenceFiles
+        .map((file, index) => {
+            const fileName = file.name || `reference-${index + 1}.txt`;
+            return `### 參考檔案 ${index + 1}: ${fileName}\n${file.content}`;
+        })
+        .join("\n\n");
+
+    return `\n\n以下是可參考的附加檔案內容，請依需求酌量使用：\n${referencesText}`;
+}
+
+function buildUserPrompt(currentXml, prompt, referenceFiles = [], hasSelectedRegionImage = false) {
+    const referenceContext = buildReferenceContext(referenceFiles);
+    let selectedRegionHint = "";
+    if (hasSelectedRegionImage) {
+        selectedRegionHint = "\n\n另外我提供了一張「目前預覽中被框選區塊」的圖片。請優先根據這個區域來理解我想改哪一塊。";
+    }
+
+    if (currentXml) {
+        return `這是我目前的 Draw.io XML 程式碼:\n\n${currentXml}\n\n使用者的修改需求：${prompt}${referenceContext}${selectedRegionHint}`;
+    }
+
+    return `請幫我產生一個全新的 Draw.io 圖表。使用者的需求：${prompt}${referenceContext}${selectedRegionHint}`;
+}
+
+function getInlineImagePart(selectedRegionImage) {
+    if (!selectedRegionImage?.dataUrl || !selectedRegionImage?.mimeType) {
+        return null;
+    }
+
+    const [, base64Data = ""] = selectedRegionImage.dataUrl.split(",", 2);
+    if (!base64Data) {
+        return null;
+    }
+
+    return {
+        inline_data: {
+            mime_type: selectedRegionImage.mimeType,
+            data: base64Data
+        }
+    };
 }
 
 function sanitizeXmlText(resultText) {
@@ -85,13 +124,21 @@ export async function requestAiXml({
     prompt,
     currentXml,
     apiKey,
-    model
+    model,
+    referenceFiles = [],
+    selectedRegionImage = null
 }) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
-    const userPrompt = buildUserPrompt(currentXml, prompt);
+    const hasSelectedRegionImage = Boolean(selectedRegionImage);
+    const userPrompt = buildUserPrompt(currentXml, prompt, referenceFiles, hasSelectedRegionImage);
     const systemPrompt = await loadSystemPrompt();
+    const contentParts = [{ text: userPrompt }];
+    const inlineImagePart = getInlineImagePart(selectedRegionImage);
+    if (inlineImagePart) {
+        contentParts.push(inlineImagePart);
+    }
     const payload = {
-        contents: [{ parts: [{ text: userPrompt }] }],
+        contents: [{ parts: contentParts }],
         systemInstruction: { parts: [{ text: systemPrompt }] }
     };
 

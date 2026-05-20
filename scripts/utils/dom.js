@@ -10,6 +10,12 @@ function getRequiredElement(id) {
 
 export function getDomElements() {
     return {
+        editorTabBtn: getRequiredElement("editorTabBtn"),
+        aiTabBtn: getRequiredElement("aiTabBtn"),
+        versionsTabBtn: getRequiredElement("versionsTabBtn"),
+        editorTabPanel: getRequiredElement("editorTabPanel"),
+        aiTabPanel: getRequiredElement("aiTabPanel"),
+        versionsTabPanel: getRequiredElement("versionsTabPanel"),
         xmlInput: getRequiredElement("xmlInput"),
         languageSelect: getRequiredElement("languageSelect"),
         urlInput: getRequiredElement("urlInput"),
@@ -25,14 +31,30 @@ export function getDomElements() {
         apiKeyInput: getRequiredElement("apiKeyInput"),
         modelInput: getRequiredElement("modelInput"),
         aiPrompt: getRequiredElement("aiPrompt"),
+        referenceDropzone: getRequiredElement("referenceDropzone"),
+        referenceUploadBtn: getRequiredElement("referenceUploadBtn"),
+        referenceFileInput: getRequiredElement("referenceFileInput"),
+        clearReferenceFilesBtn: getRequiredElement("clearReferenceFilesBtn"),
+        referenceFilesList: getRequiredElement("referenceFilesList"),
+        selectedRegionEmpty: getRequiredElement("selectedRegionEmpty"),
+        selectedRegionPreviewWrap: getRequiredElement("selectedRegionPreviewWrap"),
+        selectedRegionPreview: getRequiredElement("selectedRegionPreview"),
+        selectedRegionMeta: getRequiredElement("selectedRegionMeta"),
+        clearSelectedRegionBtn: getRequiredElement("clearSelectedRegionBtn"),
         askAiBtn: getRequiredElement("askAiBtn"),
         askAiBtnText: getRequiredElement("askAiBtnText"),
         aiSpinner: getRequiredElement("aiSpinner"),
+        aiHistoryList: getRequiredElement("aiHistoryList"),
+        aiHistoryEmpty: getRequiredElement("aiHistoryEmpty"),
+        clearHistoryBtn: getRequiredElement("clearHistoryBtn"),
         geminiSettingsModal: getRequiredElement("geminiSettingsModal"),
         geminiSettingsBackdrop: getRequiredElement("geminiSettingsBackdrop"),
         openGeminiSettingsBtn: getRequiredElement("openGeminiSettingsBtn"),
         closeGeminiSettingsBtn: getRequiredElement("closeGeminiSettingsBtn"),
         cancelGeminiSettingsBtn: getRequiredElement("cancelGeminiSettingsBtn"),
-        saveGeminiSettingsBtn: getRequiredElement("saveGeminiSettingsBtn")
+        saveGeminiSettingsBtn: getRequiredElement("saveGeminiSettingsBtn"),
+        startSelectionBtn: getRequiredElement("startSelectionBtn"),
+        cancelSelectionBtn: getRequiredElement("cancelSelectionBtn"),
+        selectionBox: getRequiredElement("selectionBox")
     };
 }

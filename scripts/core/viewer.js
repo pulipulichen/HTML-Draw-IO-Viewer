@@ -20,6 +20,8 @@ function setupMousePanZoom(viewerContainer, diagramHost) {
     const minScale = 0.25;
     const maxScale = 4;
 
+    const isSelectMode = () => viewerContainer.dataset.interactionMode === "select";
+
     viewerContainer.style.cursor = "grab";
     viewerContainer.style.touchAction = "none";
 
@@ -94,6 +96,9 @@ function setupMousePanZoom(viewerContainer, diagramHost) {
     };
 
     const onWheel = (event) => {
+        if (isSelectMode()) {
+            return;
+        }
         event.preventDefault();
         hasInteracted = true;
 
@@ -121,6 +126,9 @@ function setupMousePanZoom(viewerContainer, diagramHost) {
     };
 
     const onPointerDown = (event) => {
+        if (isSelectMode()) {
+            return;
+        }
         if (event.button !== 0 && event.button !== 1) {
             return;
         }
@@ -136,6 +144,9 @@ function setupMousePanZoom(viewerContainer, diagramHost) {
     };
 
     const onPointerMove = (event) => {
+        if (isSelectMode()) {
+            return;
+        }
         if (!isDragging || event.pointerId !== dragPointerId) {
             return;
         }
@@ -147,6 +158,9 @@ function setupMousePanZoom(viewerContainer, diagramHost) {
     };
 
     const releaseDragState = (event) => {
+        if (isSelectMode()) {
+            return;
+        }
         if (!isDragging || event.pointerId !== dragPointerId) {
             return;
         }
