@@ -150,6 +150,8 @@ function setAiLoading(isLoading) {
     dom.aiSpinner.classList.toggle("hidden", !isLoading);
     dom.askAiBtn.classList.toggle("opacity-75", isLoading);
     dom.askAiBtn.classList.toggle("cursor-not-allowed", isLoading);
+    dom.aiLoadingOverlay.classList.toggle("hidden", !isLoading);
+    dom.aiLoadingOverlay.classList.toggle("flex", isLoading);
 }
 
 function normalizeTab(value) {

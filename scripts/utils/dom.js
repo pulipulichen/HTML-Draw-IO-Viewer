@@ -60,6 +60,7 @@ export function getDomElements() {
         highlightModeSelect: getRequiredElement("highlightModeSelect"),
         addHighlightBtn: getRequiredElement("addHighlightBtn"),
         eraseHighlightBtn: getRequiredElement("eraseHighlightBtn"),
-        selectionBox: getRequiredElement("selectionBox")
+        selectionBox: getRequiredElement("selectionBox"),
+        aiLoadingOverlay: getRequiredElement("aiLoadingOverlay")
     };
 }

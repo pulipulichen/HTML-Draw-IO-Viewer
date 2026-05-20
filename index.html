@@ -211,6 +211,14 @@
         </div>
     </div>
 
+    <!-- AI 讀取中全域 Overlay -->
+    <div id="aiLoadingOverlay" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+        <div class="flex flex-col items-center gap-4 bg-white rounded-2xl shadow-2xl px-10 py-8 border border-slate-200">
+            <div class="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+            <p class="text-slate-700 font-semibold text-base" data-i18n="ai.overlayLoading">AI 產生中，請稍候…</p>
+        </div>
+    </div>
+
     <!-- Gemini 設定 Modal -->
     <div id="geminiSettingsModal" class="fixed inset-0 z-40 hidden items-center justify-center p-4">
         <div id="geminiSettingsBackdrop" class="absolute inset-0 bg-slate-900/60"></div>

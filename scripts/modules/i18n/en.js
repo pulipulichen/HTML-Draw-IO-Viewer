@@ -43,6 +43,7 @@ window.I18N_TRANSLATIONS.en = {
     "ai.removeReferenceBtn": "Remove",
     "ai.askBtnIdle": "Ask AI to Generate/Modify",
     "ai.askBtnLoading": "AI is thinking...",
+    "ai.overlayLoading": "AI is generating, please wait…",
     "history.title": "AI Version History",
     "history.clearBtn": "Clear history",
     "history.empty": "No AI change history yet.",

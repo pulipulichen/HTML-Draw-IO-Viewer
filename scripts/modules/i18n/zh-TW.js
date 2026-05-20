@@ -42,6 +42,7 @@ window.I18N_TRANSLATIONS["zh-TW"] = {
     "ai.removeReferenceBtn": "移除",
     "ai.askBtnIdle": "請 AI 產生/修改",
     "ai.askBtnLoading": "AI 思考中...",
+    "ai.overlayLoading": "AI 產生中，請稍候…",
     "history.title": "AI 修改版本記錄",
     "history.clearBtn": "清空記錄",
     "history.empty": "目前還沒有 AI 修改紀錄。",
