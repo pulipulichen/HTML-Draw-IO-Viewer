@@ -55,6 +55,10 @@ export function createShortcutsController(options) {
                 event.key.toLowerCase() === "s";
             if (isSaveShortcut) {
                 event.preventDefault();
+                if (event.shiftKey) {
+                    dom.downloadPngBtn.click();
+                    return;
+                }
                 dom.downloadXmlBtn.click();
                 return;
             }

@@ -41,7 +41,12 @@
             <div class="left-tabs flex flex-col gap-4 flex-1 min-h-0">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-medium text-slate-500" data-i18n="ai.currentModeLabel">目前模式</span>
-                    <span id="currentSourceModeBadge" class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold text-indigo-700 border-indigo-200 bg-indigo-50"></span>
+                    <button
+                        id="currentSourceModeBadge"
+                        type="button"
+                        class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold text-indigo-700 border-indigo-200 bg-indigo-50 transition-colors hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-400"
+                        data-i18n-title="ai.currentModeSwitchHint">
+                    </button>
                 </div>
                 <div class="grid grid-cols-3 p-1 bg-slate-100 rounded-lg">
                     <button id="editorTabBtn" type="button" data-tab-target="editor" class="left-tab-btn active px-3 py-2 text-sm rounded-md font-semibold transition-colors" data-i18n="tabs.editor">Source (X)</button>
@@ -49,52 +54,62 @@
                     <button id="versionsTabBtn" type="button" data-tab-target="versions" class="left-tab-btn px-3 py-2 text-sm rounded-md font-semibold transition-colors" data-i18n="tabs.versions">Versions (V)</button>
                 </div>
 
-                <div id="editorTabPanel" data-tab-panel="editor" class="space-y-4 h-full overflow-y-auto pr-1">
-                    <div class="flex flex-col min-h-[320px]">
-                        <div class="flex justify-between items-center mb-1 gap-2">
-                            <label class="block text-sm font-medium text-slate-600" data-i18n="editor.xmlLabel">XML Source (Live Preview)</label>
-                            <div class="flex items-center gap-2">
-                                <select id="sourceFormatSelect" class="px-2 py-1.5 text-xs border border-slate-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="auto" data-i18n="editor.sourceFormatAuto">Auto Detect</option>
-                                    <option value="drawio" data-i18n="editor.sourceFormatDrawio">Draw.io XML</option>
-                                    <option value="mermaid" data-i18n="editor.sourceFormatMermaid">Mermaid</option>
-                                </select>
-                                <button id="clearXmlBtn" class="text-xs text-slate-600 hover:text-slate-800 font-medium" data-i18n="editor.clearBtn">Clear</button>
-                                <button id="formatBtn" class="text-xs text-blue-600 hover:text-blue-800 font-medium" data-i18n="editor.rerenderBtn">Rerender</button>
+                <div id="editorTabPanel" data-tab-panel="editor" class="h-full min-h-0 flex flex-col">
+                    <div class="flex-1 space-y-4 overflow-y-auto pr-1 min-h-0">
+                        <div class="flex flex-col min-h-[320px]">
+                            <div class="flex justify-between items-center mb-1 gap-2">
+                                <label class="block text-sm font-medium text-slate-600" data-i18n="editor.xmlLabel">XML Source (Live Preview)</label>
+                                <div class="flex items-center gap-2">
+                                    <select id="sourceFormatSelect" class="px-2 py-1.5 text-xs border border-slate-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="auto" data-i18n="editor.sourceFormatAuto">Auto Detect</option>
+                                        <option value="drawio" data-i18n="editor.sourceFormatDrawio">Draw.io</option>
+                                        <option value="mermaid" data-i18n="editor.sourceFormatMermaid">Mermaid</option>
+                                    </select>
+                                    <button id="clearXmlBtn" class="text-xs text-slate-600 hover:text-slate-800 font-medium" data-i18n="editor.clearBtn">Clear</button>
+                                    <button id="formatBtn" class="text-xs text-blue-600 hover:text-blue-800 font-medium" data-i18n="editor.rerenderBtn">Rerender</button>
+                                </div>
+                            </div>
+                            <textarea id="xmlInput" class="w-full min-h-[260px] p-3 border border-slate-300 rounded-md font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y shadow-inner bg-slate-50" data-i18n-placeholder="editor.xmlPlaceholder" placeholder="Paste your Draw.io XML here..."></textarea>
+                        </div>
+
+                        <div class="border-t border-slate-200 pt-4 pb-2">
+                            <div class="flex justify-between items-center mb-3">
+                                <h3 class="text-sm font-bold text-slate-700" data-i18n="import.title">File and URL Import</h3>
+                                <button id="loadSampleBtn" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1 rounded transition-colors font-medium" data-i18n="import.loadSampleBtn">Load Sample</button>
+                            </div>
+                            
+                            <div class="flex gap-2 mb-3">
+                                <input type="text" id="urlInput" data-i18n-placeholder="import.urlPlaceholder" placeholder="Enter XML URL..." class="flex-1 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                                <button id="fetchBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap" data-i18n="import.loadBtn">Load</button>
+                            </div>
+
+                            <div id="dropzone" class="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center bg-slate-50 hover:bg-slate-100 transition-colors group flex flex-col items-center justify-center gap-1 cursor-pointer">
+                                <p class="text-xs text-slate-500 group-hover:text-slate-700" data-i18n="import.dropzoneHint">Drag and drop .drawio / .xml files here</p>
+                                <span class="text-[10px] text-slate-400 my-1" data-i18n="import.orDivider">- or -</span>
+                                <button type="button" id="uploadBtn" class="bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 px-4 py-1.5 rounded text-xs font-medium transition-colors shadow-sm pointer-events-auto" data-i18n="import.selectFileBtn">
+                                    Select local file
+                                </button>
+                                <input type="file" id="fileInput" accept=".xml,.drawio,.mmd,.mermaid" class="hidden">
+                            </div>
+                            <div class="mt-3 border border-slate-200 rounded-lg bg-slate-50 px-3 py-2">
+                                <p class="text-[11px] text-slate-600 font-medium" data-i18n="export.drawioEditorLabel">Draw.io Editor</p>
+                                <div class="mt-2 grid grid-cols-2 gap-2">
+                                    <button id="openInDrawioBtn" type="button" class="w-full text-xs bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded transition-colors font-medium text-center" data-i18n="export.openCurrentInDrawioBtn">Open Current XML in Draw.io</button>
+                                    <a id="openDrawioLink" href="https://app.diagrams.net/" target="_blank" rel="noopener noreferrer" class="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded transition-colors font-medium inline-flex items-center justify-center" data-i18n="export.openDrawioLink">Open Draw.io</a>
+                                </div>
                             </div>
                         </div>
-                        <textarea id="xmlInput" class="w-full min-h-[260px] p-3 border border-slate-300 rounded-md font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y shadow-inner bg-slate-50" data-i18n-placeholder="editor.xmlPlaceholder" placeholder="Paste your Draw.io XML here..."></textarea>
                     </div>
 
-                    <div class="border-t border-slate-200 pt-4">
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-sm font-bold text-slate-700" data-i18n="import.title">File and URL Import</h3>
-                            <button id="loadSampleBtn" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1 rounded transition-colors font-medium" data-i18n="import.loadSampleBtn">Load Sample</button>
-                        </div>
-                        
-                        <div class="flex gap-2 mb-3">
-                            <input type="text" id="urlInput" data-i18n-placeholder="import.urlPlaceholder" placeholder="Enter XML URL..." class="flex-1 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-                            <button id="fetchBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap" data-i18n="import.loadBtn">Load</button>
-                        </div>
-
-                        <div id="dropzone" class="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center bg-slate-50 hover:bg-slate-100 transition-colors group flex flex-col items-center justify-center gap-1 cursor-pointer">
-                            <p class="text-xs text-slate-500 group-hover:text-slate-700" data-i18n="import.dropzoneHint">Drag and drop .drawio / .xml files here</p>
-                            <span class="text-[10px] text-slate-400 my-1" data-i18n="import.orDivider">- or -</span>
-                            <button type="button" id="uploadBtn" class="bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 px-4 py-1.5 rounded text-xs font-medium transition-colors shadow-sm pointer-events-auto" data-i18n="import.selectFileBtn">
-                                Select local file
-                            </button>
-                            <input type="file" id="fileInput" accept=".xml,.drawio,.mmd,.mermaid" class="hidden">
-                        </div>
-                        <div class="mt-3 border border-slate-200 rounded-lg bg-slate-50 px-3 py-2">
-                            <div class="text-[11px] text-slate-600">
-                                <span data-i18n="export.currentFileLabel">Current file</span>:
-                                <input id="currentFileNameInput" type="text" value="diagram.drawio" class="ml-1 w-[220px] max-w-full rounded border border-slate-300 px-1.5 py-0.5 text-[11px] font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <div class="shrink-0 pt-3 pb-1 bg-white/95 backdrop-blur-sm border-t border-slate-200">
+                        <div class="border border-slate-200 rounded-lg bg-slate-50 px-3 py-2">
+                            <div class="flex items-center gap-2 text-sm text-slate-600">
+                                <span class="shrink-0" data-i18n="export.currentFileLabel">Current file</span>:
+                                <input id="currentFileNameInput" type="text" value="diagram.drawio" class="flex-1 w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500">
                             </div>
-                            <div class="mt-2 flex flex-wrap gap-2">
-                                <button id="downloadXmlBtn" type="button" class="text-xs bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded transition-colors font-medium" data-i18n="export.downloadBtn">Download XML</button>
-                                <button id="downloadPngBtn" type="button" class="text-xs bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded transition-colors font-medium" data-i18n="export.downloadTransparentPngBtn">Download PNG (Transparent)</button>
-                                <button id="openInDrawioBtn" type="button" class="text-xs bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded transition-colors font-medium" data-i18n="export.openCurrentInDrawioBtn">Open Current XML in Draw.io</button>
-                                <a id="openDrawioLink" href="https://app.diagrams.net/" target="_blank" rel="noopener noreferrer" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded transition-colors font-medium inline-flex items-center" data-i18n="export.openDrawioLink">Open Draw.io</a>
+                            <div class="mt-2 grid grid-cols-2 gap-2">
+                                <button id="downloadXmlBtn" type="button" class="w-full text-xs bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded transition-colors font-medium text-center" data-i18n="export.downloadBtn">Download XML</button>
+                                <button id="downloadPngBtn" type="button" class="w-full text-xs bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded transition-colors font-medium text-center" data-i18n="export.downloadTransparentPngBtn">Export PNG</button>
                             </div>
                         </div>
                     </div>
@@ -114,24 +129,7 @@
 
                         <div>
                             <div class="flex items-center justify-between gap-2 mb-1">
-                                <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                    <label class="block text-xs font-medium text-indigo-700" data-i18n="ai.promptLabel">Edit diagram with natural language</label>
-                                    <button
-                                        type="button"
-                                        class="text-[11px] text-indigo-700 hover:text-indigo-900 hover:underline decoration-indigo-400 underline-offset-2"
-                                        data-prompt-key="ai.promptExampleOrgChart"
-                                        data-i18n="ai.promptQuickOrgChart">
-                                        組織圖
-                                    </button>
-                                    <span class="text-[11px] text-indigo-400">|</span>
-                                    <button
-                                        type="button"
-                                        class="text-[11px] text-indigo-700 hover:text-indigo-900 hover:underline decoration-indigo-400 underline-offset-2"
-                                        data-prompt-key="ai.promptExampleIgTone"
-                                        data-i18n="ai.promptQuickColorAdjust">
-                                        調整顏色
-                                    </button>
-                                </div>
+                                <label class="block text-xs font-medium text-indigo-700" data-i18n="ai.promptLabel">Edit diagram with natural language</label>
                                 <button
                                     id="clearAiPromptBtn"
                                     type="button"
@@ -142,6 +140,33 @@
                                 </button>
                             </div>
                             <textarea id="aiPrompt" rows="3" data-i18n-placeholder="ai.promptPlaceholder" placeholder="Example: Add a red 'End' node at the end, or generate a login flowchart..." class="w-full p-2 border border-indigo-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none bg-white"></textarea>
+                            <div class="mt-2">
+                                <p class="text-[11px] font-medium text-indigo-700/80 mb-1" data-i18n="ai.promptExamplesTitle">Prompt examples</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <button
+                                        type="button"
+                                        class="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-100/70 px-3 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors"
+                                        data-prompt-key="ai.promptExampleOrgChart"
+                                        data-i18n="ai.promptQuickOrgChart">
+                                        Org Chart
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-100/70 px-3 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors"
+                                        data-prompt-key="ai.promptExampleIgTone"
+                                        data-i18n="ai.promptQuickColorAdjust">
+                                        Adjust Colors
+                                    </button>
+                                    <button
+                                        id="drawioCompactPromptBtn"
+                                        type="button"
+                                        class="hidden inline-flex items-center rounded-full border border-indigo-200 bg-indigo-100/70 px-3 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors"
+                                        data-prompt-key="ai.promptExampleCompactLayout"
+                                        data-i18n="ai.promptQuickCompactLayout">
+                                        Make Layout More Compact
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="mt-3 border border-indigo-200 rounded-md bg-white p-3">
@@ -169,17 +194,18 @@
                             <ul id="referenceFilesList" class="mt-2 text-xs space-y-1"></ul>
                         </div>
 
+                        <button id="aiDemoBtn" type="button" class="mt-3 w-full bg-white border border-indigo-200 hover:bg-indigo-100 text-indigo-700 py-2 rounded-md text-sm font-medium transition-colors" data-i18n="ai.demoBtn">
+                            Demo：翻譯成英文（不連 Gemini）
+                        </button>
+
                         <div class="sticky bottom-0 pt-3 pb-1 bg-indigo-50/95 backdrop-blur-sm">
                             <button id="askAiBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.64 3.68-1.25-1.25a.96.96 0 0 0-1.36 0l-3.23 3.23 1.25 1.25a.96.96 0 0 0 1.36 0l3.23-3.23a.96.96 0 0 0 0-1.36Z"></path><path d="m14.65 6.78 3.54 3.54"></path><path d="m3.38 18.2 2.37-2.37"></path><path d="m5.5 19.33-1.63 1.63a1 1 0 0 1-1.42 0l-1-1a1 1 0 0 1 0-1.42l1.63-1.63"></path><path d="M12.98 9.58 4.25 18.3l-1.04-1.04A3 3 0 0 1 2.3 15.1l7.85-8.73"></path><path d="M10.15 7.42 16.3 1.27a2.5 2.5 0 0 1 3.53 0l2.9 2.9a2.5 2.5 0 0 1 0 3.54L16.58 13.85"></path></svg>
                                 <span id="askAiBtnText" data-i18n="ai.askBtnIdle">Ask AI to Generate/Modify</span>
                                 <div id="aiSpinner" class="spinner hidden"></div>
                             </button>
-                            <button id="aiDemoBtn" type="button" class="mt-2 w-full bg-white border border-indigo-200 hover:bg-indigo-100 text-indigo-700 py-2 rounded-md text-sm font-medium transition-colors" data-i18n="ai.demoBtn">
-                                Demo：翻譯成英文（不連 Gemini）
-                            </button>
                             <button id="convertMermaidBtn" type="button" class="mt-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-md text-sm font-medium transition-colors hidden" data-i18n="ai.convertMermaidBtn">
-                                Mermaid 轉 Draw.io（AI）
+                                範例用詞
                             </button>
                         </div>
                     </div>
@@ -251,6 +277,14 @@
         </div>
     </div>
 
+    <!-- XML 匯出讀取中全域 Overlay -->
+    <div id="xmlExportLoadingOverlay" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+        <div class="flex flex-col items-center gap-4 bg-white rounded-2xl shadow-2xl px-10 py-8 border border-slate-200">
+            <div class="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
+            <p class="text-slate-700 font-semibold text-base" data-i18n="export.xmlExportLoading">準備下載 XML 中，請稍候…</p>
+        </div>
+    </div>
+
     <!-- Gemini 設定 Modal -->
     <div id="geminiSettingsModal" class="fixed inset-0 z-40 hidden items-center justify-center p-4">
         <div id="geminiSettingsBackdrop" class="absolute inset-0 bg-slate-900/60"></div>
@@ -286,6 +320,8 @@
             </div>
             <div class="grid grid-cols-[auto,1fr] gap-x-4 gap-y-2 text-sm text-slate-700">
                 <kbd class="px-2 py-1 rounded bg-slate-100 border border-slate-200 font-mono text-xs">Ctrl/Cmd + S</kbd>
+                <span data-i18n="shortcuts.downloadXml">Download XML</span>
+                <kbd class="px-2 py-1 rounded bg-slate-100 border border-slate-200 font-mono text-xs">Ctrl/Cmd + Shift + S</kbd>
                 <span data-i18n="shortcuts.downloadTransparentPng">Download transparent PNG</span>
                 <kbd class="px-2 py-1 rounded bg-slate-100 border border-slate-200 font-mono text-xs">+</kbd>
                 <span data-i18n="shortcuts.zoomIn">Zoom in preview</span>

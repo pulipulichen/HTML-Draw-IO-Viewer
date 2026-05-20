@@ -12,12 +12,16 @@
 - Added `sourceFormat` persistence in `localStorage` to keep user format preference across reloads.
 - Added a local bundled Traditional Chinese font asset (`assets/fonts/NotoSansTC-wght.ttf`) for PNG export font embedding without remote font dependencies.
 - Added `scripts/services/fontEmbedService.js` to fetch, convert, and cache the embedded font as a Data URI for repeated exports.
+- Added a global XML export loading overlay to match PNG export feedback behavior and provide clearer download progress cues.
 
 ### Changed
 
 - Updated sample loading behavior so `Load Sample` now follows current source format (`Draw.io` loads `demo/example.drawio`, `Mermaid` loads `demo/example.mmd`).
+- Updated the top `Current mode` badge to act as a direct Draw.io/Mermaid mode toggle and always load the target mode sample on switch.
 - Updated sample/demo file paths used by runtime logic (startup sample load, AI demo load, service-worker cache list, and E2E file paths) to the `demo/` directory.
 - Updated import support to include Mermaid file extensions (`.mmd`, `.mermaid`).
+- Updated Mermaid-mode export actions to hide Draw.io-specific buttons and relabel the XML download action to `Download MMD`.
+- Updated Mermaid-mode source downloads to normalize export filenames to the `.mmd` extension.
 - Updated version history entries to persist and display the source mode captured at creation time (instead of showing only the current global mode).
 - Updated app branding/title text across HTML title, i18n metadata, and PWA manifest to `AI Dragram Editor` (including `short_name`).
 - Updated Mermaid-mode AI behavior to keep responses in Mermaid by default, and only return Draw.io XML when the prompt explicitly requests conversion.
@@ -32,9 +36,17 @@
 - Updated PNG export sanitization to inject an embedded `@font-face` (Data URI) and prefer local Noto Sans TC for consistent Traditional Chinese glyph rendering.
 - Updated service-worker pre-cache entries and cache versioning to include the local font asset and font embedding service for offline/repeated export performance.
 - Updated preview top-right quick export control text to `Export PNG` while keeping the original left-panel transparent PNG download action unchanged.
+- Updated Traditional Chinese PNG export labels to consistently use `匯出PNG` for both the preview quick-export control and the left-panel PNG action.
+- Updated keyboard export shortcuts so `Ctrl/Cmd + S` downloads XML and `Ctrl/Cmd + Shift + S` exports transparent PNG.
+- Updated the `Source` tab layout to keep XML/MMD and PNG download actions in a persistent bottom action bar while the editor/import content scrolls independently.
+- Updated Source-tab action groups (`Download XML/MMD`, `Export PNG`, and Draw.io open actions) to use fluid full-width button layouts for more consistent click targets.
+- Updated the current file-name row to use a fluid input field and standard text sizing for improved readability and editing comfort.
+- Updated the Draw.io editor section label to use i18n via the new translation key `export.drawioEditorLabel` in both `en` and `zh-TW` dictionaries.
+- Updated Draw.io mode naming in the source-format selector and current-mode badge from `Draw.io XML` to `Draw.io` for clearer, shorter UI wording.
 
 ### Fixed
 
+- Fixed accidental sample overwrite during mode switches by adding a confirmation prompt when current source content differs from the target sample content.
 - Fixed selected version-card highlight clipping at the top/left edges of the scroll container by using an inset ring style.
 - Fixed Mermaid preview failures for pasted Markdown fenced code blocks by normalizing Mermaid input before rendering.
 - Fixed Mermaid `Syntax error in text` rendering cases by adding pre-render Mermaid parse validation and defensive error handling for error-markup SVG output.

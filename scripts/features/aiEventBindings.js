@@ -25,10 +25,17 @@ export function registerAiEvents(options) {
             filePath: "./demo/example2.drawio"
         },
         mermaid: {
-            prompt: "請保留結構，將節點文字翻譯成英文",
+            prompt: "請保留結構，改成橫向排列（由左到右）",
             filePath: "./demo/example2.mmd"
         }
     };
+    function looksLikeDrawioXml(text) {
+        const normalized = text.trim();
+        if (!normalized.startsWith("<")) {
+            return false;
+        }
+        return /<mxfile[\s>]|<mxGraphModel[\s>]|<diagram[\s>]/i.test(normalized);
+    }
 
     dom.aiTabPanel.addEventListener("click", (event) => {
         let target = null;
@@ -99,7 +106,12 @@ export function registerAiEvents(options) {
                 sourceFormat: currentSourceFormat
             });
 
-            fillXmlAndRender(resultXml);
+            const shouldSwitchToDrawio = looksLikeDrawioXml(resultXml);
+            if (shouldSwitchToDrawio) {
+                fillXmlAndRender(resultXml, { sourceFormatHint: "drawio" });
+            } else {
+                fillXmlAndRender(resultXml);
+            }
             fileNameManager.markAiEdited();
             const thumbnailDataUrl = await captureHistoryThumbnail();
             aiHistoryController.addEntry({

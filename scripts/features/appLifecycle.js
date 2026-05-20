@@ -100,7 +100,8 @@ export function registerAppEvents(options) {
         toast,
         t,
         drawioEditorUrl,
-        fileNameManager
+        fileNameManager,
+        getCurrentSourceFormat
     });
 
     registerFileNameEvents({ dom, fileNameManager });

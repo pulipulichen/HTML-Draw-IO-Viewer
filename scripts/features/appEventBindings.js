@@ -12,6 +12,21 @@ function triggerXmlDownload(xmlText, fileName) {
     URL.revokeObjectURL(blobUrl);
 }
 
+function normalizeMermaidDownloadFileName(fileName) {
+    const normalized = String(fileName || "").trim() || "diagram.mmd";
+    const dotIndex = normalized.lastIndexOf(".");
+    if (dotIndex <= 0 || dotIndex === normalized.length - 1) {
+        return `${normalized}.mmd`;
+    }
+
+    const extension = normalized.slice(dotIndex).toLowerCase();
+    if (extension === ".mmd" || extension === ".mermaid") {
+        return normalized;
+    }
+
+    return `${normalized.slice(0, dotIndex)}.mmd`;
+}
+
 const HTML_TO_IMAGE_MODULE_URL = "https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/+esm";
 let htmlToImageModulePromise = null;
 const PNG_EXPORT_MAX_EDGE = 8192;
@@ -164,11 +179,13 @@ function sanitizeSvgForCanvasExport(svgElement, options = {}) {
     // sans-serif keeps the text visible without triggering any external font
     // download.
     const fontGuardStyle = document.createElementNS("http://www.w3.org/2000/svg", "style");
-    const embeddedFontFaceCss = embeddedFontDataUri
-        ? "@font-face { font-family: 'Embedded Noto Sans TC'; font-style: normal; font-weight: 100 900; src: url('" +
-          embeddedFontDataUri +
-          "') format('truetype'); }\n"
-        : "";
+    let embeddedFontFaceCss = "";
+    if (embeddedFontDataUri) {
+        embeddedFontFaceCss =
+            "@font-face { font-family: 'Embedded Noto Sans TC'; font-style: normal; font-weight: 100 900; src: url('" +
+            embeddedFontDataUri +
+            "') format('truetype'); }\n";
+    }
     const preferredFamily = embeddedFontDataUri ? "'Embedded Noto Sans TC', " : "";
     fontGuardStyle.textContent =
         embeddedFontFaceCss +
@@ -690,29 +707,78 @@ export function registerInputEvents(options) {
         setSourceFormatHint = () => {},
         getCurrentSourceFormat = () => "drawio"
     } = options;
+    let isSwitchingSourceFormat = false;
+
+    const applySourceFormatChange = async (selectedFormat, { forceSampleLoad = false } = {}) => {
+        const currentMode = getCurrentSourceFormat() === "mermaid" ? "mermaid" : "drawio";
+        const canLoadSample = selectedFormat === "drawio" || selectedFormat === "mermaid";
+        const shouldLoadSample = canLoadSample && (forceSampleLoad || !dom.xmlInput.value.trim());
+        if (shouldLoadSample) {
+            isSwitchingSourceFormat = true;
+            if (dom.currentSourceModeBadge instanceof HTMLButtonElement) {
+                dom.currentSourceModeBadge.disabled = true;
+            }
+            try {
+                const sample = await loadExampleXml(selectedFormat);
+                const currentSourceContent = dom.xmlInput.value.trim();
+                const sampleContent = sample.content.trim();
+                const shouldConfirmOverwrite =
+                    forceSampleLoad &&
+                    Boolean(currentSourceContent) &&
+                    currentSourceContent !== sampleContent;
+
+                if (shouldConfirmOverwrite) {
+                    const confirmed = window.confirm(
+                        t(
+                            "confirm.switchModeLoadSample",
+                            "Switching mode will replace current content with the sample. Continue?"
+                        )
+                    );
+                    if (!confirmed) {
+                        dom.sourceFormatSelect.value = currentMode;
+                        writeStoredValue(storageKeys.sourceFormat, currentMode);
+                        render(dom.xmlInput.value);
+                        return;
+                    }
+                }
+
+                writeStoredValue(storageKeys.sourceFormat, selectedFormat);
+                setSourceFormatHint(sample.sourceFormatHint);
+                fillXmlAndRender(sample.content, { sourceFormatHint: sample.sourceFormatHint });
+                fileNameManager.setSourceFileName(sample.fileName);
+                await onSampleLoaded(sample.content);
+                toast.show(t("toast.sampleLoaded"));
+                return;
+            } catch (_error) {
+                toast.show(t("toast.sampleLoadFailed"), true);
+            } finally {
+                isSwitchingSourceFormat = false;
+                if (dom.currentSourceModeBadge instanceof HTMLButtonElement) {
+                    dom.currentSourceModeBadge.disabled = false;
+                }
+            }
+        }
+
+        writeStoredValue(storageKeys.sourceFormat, selectedFormat);
+        render(dom.xmlInput.value);
+    };
 
     dom.xmlInput.addEventListener("input", () => {
         writeStoredValue(storageKeys.diagramXml, dom.xmlInput.value);
     });
 
     dom.sourceFormatSelect.addEventListener("change", async () => {
-        writeStoredValue(storageKeys.sourceFormat, dom.sourceFormatSelect.value);
-        const selectedFormat = dom.sourceFormatSelect.value;
-        const shouldLoadSample = !dom.xmlInput.value.trim();
-        if (shouldLoadSample && (selectedFormat === "drawio" || selectedFormat === "mermaid")) {
-            try {
-                const sample = await loadExampleXml(selectedFormat);
-                setSourceFormatHint(sample.sourceFormatHint);
-                fillXmlAndRender(sample.content, { sourceFormatHint: sample.sourceFormatHint });
-                fileNameManager.setSourceFileName(sample.fileName);
-                toast.show(t("toast.sampleLoaded"));
-                return;
-            } catch (_error) {
-                toast.show(t("toast.sampleLoadFailed"), true);
-            }
-        }
+        await applySourceFormatChange(dom.sourceFormatSelect.value, { forceSampleLoad: true });
+    });
 
-        render(dom.xmlInput.value);
+    dom.currentSourceModeBadge.addEventListener("click", async () => {
+        if (isSwitchingSourceFormat) {
+            return;
+        }
+        const currentMode = getCurrentSourceFormat() === "mermaid" ? "mermaid" : "drawio";
+        const nextMode = currentMode === "mermaid" ? "drawio" : "mermaid";
+        dom.sourceFormatSelect.value = nextMode;
+        await applySourceFormatChange(nextMode, { forceSampleLoad: true });
     });
 
     window.addEventListener("beforeunload", () => {
@@ -751,14 +817,14 @@ export function registerInputEvents(options) {
         window.setTimeout(async () => {
             try {
                 const selectedFormat = dom.sourceFormatSelect.value;
-                const preferredFormat =
-                    selectedFormat === "mermaid"
-                        ? "mermaid"
-                        : selectedFormat === "drawio"
-                          ? "drawio"
-                          : getCurrentSourceFormat() === "mermaid"
-                            ? "mermaid"
-                            : "drawio";
+                let preferredFormat = "drawio";
+                if (selectedFormat === "mermaid") {
+                    preferredFormat = "mermaid";
+                } else if (selectedFormat === "drawio") {
+                    preferredFormat = "drawio";
+                } else if (getCurrentSourceFormat() === "mermaid") {
+                    preferredFormat = "mermaid";
+                }
                 const sample = await loadExampleXml(preferredFormat);
                 setSourceFormatHint(sample.sourceFormatHint);
                 fillXmlAndRender(sample.content, { sourceFormatHint: sample.sourceFormatHint });
@@ -807,16 +873,61 @@ export function registerUrlEvents(options) {
 }
 
 export function registerExportEvents(options) {
-    const { dom, toast, t, drawioEditorUrl, fileNameManager } = options;
-    dom.downloadXmlBtn.addEventListener("click", () => {
+    const {
+        dom,
+        toast,
+        t,
+        drawioEditorUrl,
+        fileNameManager,
+        getCurrentSourceFormat = () => "drawio"
+    } = options;
+    dom.downloadXmlBtn.addEventListener("click", async () => {
         const xmlText = dom.xmlInput.value.trim();
         if (!xmlText) {
             toast.show(t("toast.noXmlToDownload"), true);
             return;
         }
 
-        triggerXmlDownload(xmlText, fileNameManager.getEffectiveExportFileName());
-        toast.show(t("toast.downloadStarted"));
+        const overlay = dom.xmlExportLoadingOverlay;
+        const showOverlay = () => {
+            if (!overlay) {
+                return;
+            }
+            overlay.classList.remove("hidden");
+            overlay.classList.add("flex");
+        };
+        const hideOverlay = () => {
+            if (!overlay) {
+                return;
+            }
+            overlay.classList.add("hidden");
+            overlay.classList.remove("flex");
+        };
+
+        dom.downloadXmlBtn.disabled = true;
+        dom.downloadXmlBtn.classList.add("opacity-75", "cursor-not-allowed");
+        showOverlay();
+
+        // Let the browser paint the overlay before download starts.
+        await new Promise((resolve) =>
+            window.requestAnimationFrame(() => window.requestAnimationFrame(resolve))
+        );
+
+        try {
+            const exportFileName = fileNameManager.getEffectiveExportFileName();
+            let downloadFileName = exportFileName;
+            if (getCurrentSourceFormat() === "mermaid") {
+                downloadFileName = normalizeMermaidDownloadFileName(exportFileName);
+            }
+            triggerXmlDownload(xmlText, downloadFileName);
+            toast.show(t("toast.downloadStarted"));
+            // Keep overlay visible briefly so users can perceive feedback.
+            await new Promise((resolve) => window.setTimeout(resolve, 120));
+        } finally {
+            hideOverlay();
+            dom.downloadXmlBtn.disabled = false;
+            dom.downloadXmlBtn.classList.remove("opacity-75", "cursor-not-allowed");
+        }
     });
 
     dom.openInDrawioBtn.addEventListener("click", () => {

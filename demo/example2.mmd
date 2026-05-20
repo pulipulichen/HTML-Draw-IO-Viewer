@@ -1,10 +1,12 @@
 flowchart LR
     subgraph Frontend
+        direction LR
         UI[Web UI]
         Store[State Store]
     end
 
     subgraph Backend
+        direction LR
         API[REST API]
         Auth[Auth Service]
         DB[(Database)]

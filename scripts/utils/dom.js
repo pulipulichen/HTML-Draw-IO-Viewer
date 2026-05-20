@@ -53,6 +53,7 @@ export function getDomElements() {
         askAiBtn: getRequiredElement("askAiBtn"),
         askAiBtnText: getRequiredElement("askAiBtnText"),
         aiSpinner: getRequiredElement("aiSpinner"),
+        drawioCompactPromptBtn: getRequiredElement("drawioCompactPromptBtn"),
         aiDemoBtn: getRequiredElement("aiDemoBtn"),
         convertMermaidBtn: getRequiredElement("convertMermaidBtn"),
         aiHistoryList: getRequiredElement("aiHistoryList"),
@@ -74,6 +75,7 @@ export function getDomElements() {
         clearHighlightsBtn: getRequiredElement("clearHighlightsBtn"),
         selectionBox: getRequiredElement("selectionBox"),
         aiLoadingOverlay: getRequiredElement("aiLoadingOverlay"),
-        pngExportLoadingOverlay: getRequiredElement("pngExportLoadingOverlay")
+        pngExportLoadingOverlay: getRequiredElement("pngExportLoadingOverlay"),
+        xmlExportLoadingOverlay: getRequiredElement("xmlExportLoadingOverlay")
     };
 }

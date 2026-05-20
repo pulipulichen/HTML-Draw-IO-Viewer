@@ -16,6 +16,8 @@ It combines the Draw.io viewer with Gemini-powered prompt editing, highlighted-r
 - Attach reference files (`txt`, `md`, `xml`, `json`, `js`, `css`, `html`, etc.) for richer AI instructions.
 - Keep AI version history in-browser and restore any previous result.
 - Export XML by download or open current XML directly in Draw.io.
+- Keyboard shortcuts: `Ctrl/Cmd + S` downloads XML, and `Ctrl/Cmd + Shift + S` exports transparent PNG.
+- XML and PNG downloads both show a global loading overlay for clearer export feedback.
 - Built-in internationalization (English and Traditional Chinese) with language switching.
 - PWA support with service worker registration.
 
@@ -51,7 +53,8 @@ It combines the Draw.io viewer with Gemini-powered prompt editing, highlighted-r
 2. Edit XML directly in the source panel and preview updates live.
 3. Open **Gemini Settings** and provide your Gemini API key/model.
 4. Enter a prompt in the AI tab (optionally attach references and highlighted snapshots).
-5. Apply AI result, review history, then export XML.
+5. Apply AI result, review history, then export XML/PNG.
+   - Shortcut: `Ctrl/Cmd + S` for XML download, `Ctrl/Cmd + Shift + S` for transparent PNG export.
 
 ## Data and Storage
 

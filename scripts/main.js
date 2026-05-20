@@ -179,7 +179,9 @@ function refreshI18nDrivenUi() {
     viewer.minimap.refreshTexts();
     fileNameManager.updateCurrentFileNameInput();
     sourceFormatController.updateMermaidConvertButtonVisibility();
+    sourceFormatController.updatePromptExamplesBySourceFormat();
     sourceFormatController.refreshCurrentModeBadge();
+    sourceFormatController.refreshExportUiBySourceFormat();
     if (!dom.xmlInput.value.trim()) {
         render("");
     }

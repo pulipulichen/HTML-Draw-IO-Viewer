@@ -16,6 +16,8 @@
 - 可附加參考檔案（`txt`、`md`、`xml`、`json`、`js`、`css`、`html` 等）強化 AI 指令。
 - 內建瀏覽器端 AI 版本歷史，可回復任一過往結果。
 - 支援下載 XML，或直接將目前 XML 帶入 Draw.io 開啟。
+- 支援快捷鍵：`Ctrl/Cmd + S` 下載 XML、`Ctrl/Cmd + Shift + S` 匯出透明 PNG。
+- XML 與 PNG 下載時都會顯示全域 loading overlay，提供一致的匯出回饋。
 - 內建多語系（English / 繁體中文）切換。
 - 支援 PWA（含 service worker 註冊）。
 
@@ -51,7 +53,8 @@
 2. 在原始碼區直接編輯 XML，右側即時預覽。
 3. 到 **Gemini 設定** 填入 Gemini API Key 與模型名稱。
 4. 在 AI 分頁輸入提示詞（可選擇附加參考檔與標亮快照）。
-5. 套用 AI 結果、檢視版本歷史，最後匯出 XML。
+5. 套用 AI 結果、檢視版本歷史，最後匯出 XML/PNG。
+   - 快捷鍵：`Ctrl/Cmd + S` 下載 XML、`Ctrl/Cmd + Shift + S` 匯出透明 PNG。
 
 ## 資料與儲存
 
