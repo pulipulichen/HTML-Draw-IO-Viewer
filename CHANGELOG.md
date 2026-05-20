@@ -24,6 +24,11 @@
 - Added `Ctrl + Enter` submit shortcut inside the AI prompt textarea.
 - Added quick prompt links (`Org Chart` and `Adjust Colors`) beside the AI prompt label to instantly load example prompt text.
 - Added a one-click `Clear` action on the AI prompt header to reset current prompt input.
+- Added an interactive preview minimap with viewport indicator, click-to-navigate, and drag-to-pan behavior.
+- Added a dedicated `Clear All` highlight action button in the preview toolbar.
+- Added a keyboard shortcuts help modal, including a top-right launcher button and `?` quick-open shortcut.
+- Added global keyboard shortcuts for preview control and highlighting (`+`, `-`, `/`, `I`, `D`, `E`) plus `Ctrl/Cmd + S` to download XML directly.
+- Added a full-screen AI loading overlay while Gemini generation is in progress to provide clear global busy feedback.
 
 ### Changed
 
@@ -45,6 +50,12 @@
 - Replaced the AI section icon from a currency-style symbol to a pen-style edit icon for better semantic consistency.
 - Moved the `Ask AI to Generate/Modify` button to a sticky bottom position in the AI panel for more consistent access while scrolling.
 - Removed the unused `assets/favicon/favicon.svg` asset after standardizing favicon usage on `assets/favicon/favicon.png`.
+- Updated AI apply flow to clear existing highlights immediately after successful XML generation to avoid stale selection overlays.
+- Updated preview reset behavior so `/` now restores a centered zoom-to-fit view.
+- Updated top-right preview controls by replacing the passive pan/zoom hint chip with an actionable shortcuts entry point.
+- Updated left-panel scrolling behavior so tab buttons remain visible while the `Versions` tab content scrolls independently.
+- Updated AI prompt handling to persist draft text in `localStorage`, restore it on reload, and clear it only after successful AI submission.
+- Refactored `scripts/main.js` by extracting business-specific responsibilities into dedicated feature modules (`fileNameManager`, UI state, Gemini settings, shortcuts, shared app event bindings, and AI event bindings), keeping `main.js` focused on composition and startup orchestration.
 
 ### Improved
 
@@ -63,3 +74,5 @@
 - Fixed the i18n persistence E2E scenario by replacing `page.addInitScript` with one-time `localStorage` setup before reload, so language state assertions no longer reset to `en` on every navigation.
 - Fixed accidental text selection in the preview pane by disabling text selection styles during drag/pan interactions.
 - Fixed stale frontend assets after updates by switching same-origin service-worker fetch handling to network-first with cache fallback and a controller-change reload path.
+- Fixed Gemini multimodal request failures for highlighted-region snapshots by converting SVG-based captures to PNG before upload (`image/svg+xml` is not accepted).
+- Fixed minimap intermittently rendering blank by observing in-place SVG mutations and refreshing the minimap clone when diagram content updates.

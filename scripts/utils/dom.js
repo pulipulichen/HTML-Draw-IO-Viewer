@@ -51,6 +51,10 @@ export function getDomElements() {
         aiHistoryList: getRequiredElement("aiHistoryList"),
         aiHistoryEmpty: getRequiredElement("aiHistoryEmpty"),
         clearHistoryBtn: getRequiredElement("clearHistoryBtn"),
+        openShortcutsBtn: getRequiredElement("openShortcutsBtn"),
+        shortcutsModal: getRequiredElement("shortcutsModal"),
+        shortcutsBackdrop: getRequiredElement("shortcutsBackdrop"),
+        closeShortcutsBtn: getRequiredElement("closeShortcutsBtn"),
         geminiSettingsModal: getRequiredElement("geminiSettingsModal"),
         geminiSettingsBackdrop: getRequiredElement("geminiSettingsBackdrop"),
         openGeminiSettingsBtn: getRequiredElement("openGeminiSettingsBtn"),
@@ -60,6 +64,7 @@ export function getDomElements() {
         highlightModeSelect: getRequiredElement("highlightModeSelect"),
         addHighlightBtn: getRequiredElement("addHighlightBtn"),
         eraseHighlightBtn: getRequiredElement("eraseHighlightBtn"),
+        clearHighlightsBtn: getRequiredElement("clearHighlightsBtn"),
         selectionBox: getRequiredElement("selectionBox"),
         aiLoadingOverlay: getRequiredElement("aiLoadingOverlay")
     };

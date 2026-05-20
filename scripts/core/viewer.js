@@ -1,3 +1,5 @@
+import { createMinimap } from "../ui/minimap.js";
+
 const EMPTY_VIEW_HTML =
     '<div class="absolute inset-0 flex items-center justify-center text-slate-400">%EMPTY_MESSAGE%</div>';
 const DIAGRAM_HOST_SELECTOR = '[data-viewer-role="diagram-host"]';
@@ -7,7 +9,7 @@ function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
 }
 
-function setupMousePanZoom(viewerContainer, diagramHost) {
+function setupMousePanZoom(viewerContainer, diagramHost, { onTransformChange } = {}) {
     let transformTarget = null;
 
     let scale = 1;
@@ -23,6 +25,9 @@ function setupMousePanZoom(viewerContainer, diagramHost) {
     const maxScale = 4;
 
     const isSelectMode = () => viewerContainer.dataset.interactionMode === "select";
+    const isFromMinimap = (event) =>
+        event.target instanceof Element &&
+        Boolean(event.target.closest('[data-viewer-role^="minimap-"]'));
 
     viewerContainer.style.cursor = "grab";
     viewerContainer.style.touchAction = "none";
@@ -59,6 +64,7 @@ function setupMousePanZoom(viewerContainer, diagramHost) {
         }
 
         target.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+        onTransformChange?.({ scale, offsetX, offsetY });
     };
 
     const centerContent = () => {
@@ -97,38 +103,80 @@ function setupMousePanZoom(viewerContainer, diagramHost) {
         return true;
     };
 
-    const onWheel = (event) => {
-        if (isSelectMode()) {
-            return;
+    const fitAndCenterContent = () => {
+        const target = resolveTransformTarget();
+        if (!(target instanceof HTMLElement)) {
+            return false;
         }
-        event.preventDefault();
-        hasInteracted = true;
 
-        const nextScale = clamp(
-            scale * (event.deltaY < 0 ? 1.1 : 0.9),
+        const measureTarget = diagramHost.querySelector("svg") || target;
+        const containerRect = viewerContainer.getBoundingClientRect();
+        const contentRect = measureTarget.getBoundingClientRect();
+        if (
+            !containerRect.width ||
+            !containerRect.height ||
+            !contentRect.width ||
+            !contentRect.height ||
+            !scale
+        ) {
+            return false;
+        }
+
+        const naturalWidth = contentRect.width / scale;
+        const naturalHeight = contentRect.height / scale;
+        if (!naturalWidth || !naturalHeight) {
+            return false;
+        }
+
+        const fitScale = clamp(
+            Math.min(containerRect.width / naturalWidth, containerRect.height / naturalHeight) * 0.95,
             minScale,
             maxScale
         );
 
+        scale = fitScale;
+        offsetX = 0;
+        offsetY = 0;
+        hasInteracted = false;
+        applyTransform();
+        return centerContent();
+    };
+
+    const zoomAt = (cursorX, cursorY, zoomMultiplier) => {
+        const nextScale = clamp(scale * zoomMultiplier, minScale, maxScale);
         if (nextScale === scale) {
             return;
         }
 
-        const rect = viewerContainer.getBoundingClientRect();
-        const cursorX = event.clientX - rect.left;
-        const cursorY = event.clientY - rect.top;
         const worldX = (cursorX - offsetX) / scale;
         const worldY = (cursorY - offsetY) / scale;
 
         scale = nextScale;
         offsetX = cursorX - worldX * scale;
         offsetY = cursorY - worldY * scale;
-
+        hasInteracted = true;
         applyTransform();
+    };
+
+    const onWheel = (event) => {
+        if (isSelectMode()) {
+            return;
+        }
+        if (isFromMinimap(event)) {
+            return;
+        }
+        event.preventDefault();
+        const rect = viewerContainer.getBoundingClientRect();
+        const cursorX = event.clientX - rect.left;
+        const cursorY = event.clientY - rect.top;
+        zoomAt(cursorX, cursorY, event.deltaY < 0 ? 1.1 : 0.9);
     };
 
     const onPointerDown = (event) => {
         if (isSelectMode()) {
+            return;
+        }
+        if (isFromMinimap(event)) {
             return;
         }
         if (event.button !== 0 && event.button !== 1) {
@@ -203,11 +251,13 @@ function setupMousePanZoom(viewerContainer, diagramHost) {
     window.addEventListener("pointerup", releaseDragState, { capture: true });
     window.addEventListener("pointercancel", releaseDragState, { capture: true });
 
-    if (!centerContent()) {
-        applyTransform();
+    if (!fitAndCenterContent()) {
+        if (!centerContent()) {
+            applyTransform();
+        }
     }
 
-    return () => {
+    const teardown = () => {
         observer.disconnect();
         if (resizeObserver) {
             resizeObserver.disconnect();
@@ -220,6 +270,26 @@ function setupMousePanZoom(viewerContainer, diagramHost) {
         viewerContainer.style.cursor = "";
         viewerContainer.style.touchAction = "";
     };
+
+    const panTo = (newOffsetX, newOffsetY) => {
+        offsetX = newOffsetX;
+        offsetY = newOffsetY;
+        hasInteracted = true;
+        applyTransform();
+    };
+
+    const getTransform = () => ({ scale, offsetX, offsetY });
+    const zoomBy = (zoomMultiplier) => {
+        const rect = viewerContainer.getBoundingClientRect();
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        zoomAt(centerX, centerY, zoomMultiplier);
+    };
+    const resetView = () => {
+        fitAndCenterContent();
+    };
+
+    return { teardown, panTo, getTransform, zoomBy, resetView };
 }
 
 function activatePanTool(diagramHost) {
@@ -243,12 +313,19 @@ function removeRoleElement(viewerContainer, selector) {
 export function createDiagramViewer(viewerContainer, onRenderError, translate = (key, fallback = key) => fallback) {
     let teardownInteraction = null;
 
+    const minimap = createMinimap(viewerContainer, translate);
+
+    function teardownPanZoom() {
+        if (teardownInteraction && typeof teardownInteraction.teardown === "function") {
+            teardownInteraction.teardown();
+        }
+        teardownInteraction = null;
+    }
+
     function render(xmlString) {
         if (!xmlString || xmlString.trim() === "") {
-            if (typeof teardownInteraction === "function") {
-                teardownInteraction();
-                teardownInteraction = null;
-            }
+            teardownPanZoom();
+            minimap.onTransformChange(null, { scale: 1, offsetX: 0, offsetY: 0 });
 
             removeRoleElement(viewerContainer, DIAGRAM_HOST_SELECTOR);
             removeRoleElement(viewerContainer, EMPTY_VIEW_SELECTOR);
@@ -264,10 +341,7 @@ export function createDiagramViewer(viewerContainer, onRenderError, translate = 
         }
 
         try {
-            if (typeof teardownInteraction === "function") {
-                teardownInteraction();
-                teardownInteraction = null;
-            }
+            teardownPanZoom();
 
             removeRoleElement(viewerContainer, DIAGRAM_HOST_SELECTOR);
             removeRoleElement(viewerContainer, EMPTY_VIEW_SELECTOR);
@@ -306,7 +380,17 @@ export function createDiagramViewer(viewerContainer, onRenderError, translate = 
                 window.GraphViewer.processElements();
                 window.requestAnimationFrame(() => {
                     activatePanTool(diagramHost);
-                    teardownInteraction = setupMousePanZoom(viewerContainer, diagramHost);
+
+                    const panZoom = setupMousePanZoom(viewerContainer, diagramHost, {
+                        onTransformChange: (transform) => {
+                            const svgEl = diagramHost.querySelector("svg");
+                            minimap.onTransformChange(svgEl, transform);
+                        }
+                    });
+
+                    teardownInteraction = panZoom;
+                    minimap.setPanTo(panZoom.panTo);
+                    minimap.setGetTransform(panZoom.getTransform);
                 });
                 return;
             }
@@ -319,6 +403,22 @@ export function createDiagramViewer(viewerContainer, onRenderError, translate = 
     }
 
     return {
-        render
+        render,
+        minimap,
+        zoomIn() {
+            if (teardownInteraction && typeof teardownInteraction.zoomBy === "function") {
+                teardownInteraction.zoomBy(1.1);
+            }
+        },
+        zoomOut() {
+            if (teardownInteraction && typeof teardownInteraction.zoomBy === "function") {
+                teardownInteraction.zoomBy(0.9);
+            }
+        },
+        resetView() {
+            if (teardownInteraction && typeof teardownInteraction.resetView === "function") {
+                teardownInteraction.resetView();
+            }
+        }
     };
 }

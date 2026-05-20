@@ -448,6 +448,21 @@ export function createSelectionController({
         }
     }
 
+    async function drawSvgDataUrlToCanvas(dataUrl, width, height, ratio) {
+        const image = new Image();
+        image.src = dataUrl;
+        await waitImageLoaded(image);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(width * ratio));
+        canvas.height = Math.max(1, Math.round(height * ratio));
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+            throw new Error("canvas context unavailable");
+        }
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+        return canvas;
+    }
+
     async function captureViewerFromComposedSvg() {
         const svgElement = getRenderedSvgElement();
         if (!(svgElement instanceof SVGElement)) {
@@ -735,17 +750,37 @@ export function createSelectionController({
             throw new Error("no highlight");
         }
 
+        // Gemini API does not accept image/svg+xml; convert SVG snapshot to PNG first.
         try {
             const svgSnapshot = buildSvgSnapshotContext();
-            return {
-                mimeType: svgSnapshot.highlightedImage.mimeType,
-                dataUrl: svgSnapshot.highlightedImage.dataUrl,
-                width: svgSnapshot.highlightedImage.width,
-                height: svgSnapshot.highlightedImage.height,
-                highlightCount: highlights.length,
-                fullImage: svgSnapshot.fullImage,
-                highlightedImage: svgSnapshot.highlightedImage
-            };
+            const ratio = window.devicePixelRatio || 1;
+            const [fullCanvas, highlightedCanvas] = await Promise.all([
+                drawSvgDataUrlToCanvas(svgSnapshot.fullImage.dataUrl, svgSnapshot.fullImage.width, svgSnapshot.fullImage.height, ratio),
+                drawSvgDataUrlToCanvas(svgSnapshot.highlightedImage.dataUrl, svgSnapshot.highlightedImage.width, svgSnapshot.highlightedImage.height, ratio)
+            ]);
+            const fullDataUrl = safeCanvasToDataUrl(fullCanvas);
+            const highlightedDataUrl = safeCanvasToDataUrl(highlightedCanvas);
+            if (fullDataUrl && highlightedDataUrl) {
+                return {
+                    mimeType: "image/png",
+                    dataUrl: highlightedDataUrl,
+                    width: highlightedCanvas.width,
+                    height: highlightedCanvas.height,
+                    highlightCount: highlights.length,
+                    fullImage: {
+                        mimeType: "image/png",
+                        dataUrl: fullDataUrl,
+                        width: fullCanvas.width,
+                        height: fullCanvas.height
+                    },
+                    highlightedImage: {
+                        mimeType: "image/png",
+                        dataUrl: highlightedDataUrl,
+                        width: highlightedCanvas.width,
+                        height: highlightedCanvas.height
+                    }
+                };
+            }
         } catch (svgSnapshotError) {
             console.warn("SVG 快照路徑失敗，改用 raster fallback:", svgSnapshotError);
         }
@@ -928,6 +963,11 @@ export function createSelectionController({
             } else {
                 setSelectionButtonsState();
             }
+        });
+
+        dom.clearHighlightsBtn.addEventListener("click", () => {
+            clearSelectedRegion();
+            setSelectionMode(false);
         });
 
         dom.clearSelectedRegionBtn.addEventListener("click", () => {
