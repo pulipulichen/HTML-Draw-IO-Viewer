@@ -12,6 +12,8 @@ function triggerXmlDownload(xmlText, fileName) {
 
 const HTML_TO_IMAGE_MODULE_URL = "https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/+esm";
 let htmlToImageModulePromise = null;
+const PNG_EXPORT_MAX_EDGE = 8192;
+const PNG_EXPORT_MAX_PIXELS = 30000000;
 
 function loadHtmlToImageModule() {
     if (!htmlToImageModulePromise) {
@@ -80,12 +82,43 @@ function resolveSvgExportDimensions(svgElement) {
         Math.ceil(attrHeight || viewBoxDims?.height || rectHeight || svgElement.clientHeight || bboxHeight || 1)
     );
 
-    const maxEdge = 8192;
+    const maxEdge = PNG_EXPORT_MAX_EDGE;
     const largerEdge = Math.max(width, height);
     if (largerEdge > maxEdge) {
         const scale = maxEdge / largerEdge;
         width = Math.max(1, Math.floor(width * scale));
         height = Math.max(1, Math.floor(height * scale));
+    }
+
+    return { width, height };
+}
+
+function resolveHighResolutionExportDimensions(baseWidth, baseHeight, sourceFormat) {
+    const isMermaid = sourceFormat.includes("mermaid");
+    const baseScale = isMermaid ? 4 : 3;
+    const minWidth = isMermaid ? 1600 : 1400;
+    const minHeight = 1000;
+    const safeWidth = Math.max(1, baseWidth);
+    const safeHeight = Math.max(1, baseHeight);
+
+    let scale = baseScale;
+    scale = Math.max(scale, minWidth / safeWidth, minHeight / safeHeight);
+
+    let width = Math.max(1, Math.round(safeWidth * scale));
+    let height = Math.max(1, Math.round(safeHeight * scale));
+
+    const largerEdge = Math.max(width, height);
+    if (largerEdge > PNG_EXPORT_MAX_EDGE) {
+        const edgeScale = PNG_EXPORT_MAX_EDGE / largerEdge;
+        width = Math.max(1, Math.floor(width * edgeScale));
+        height = Math.max(1, Math.floor(height * edgeScale));
+    }
+
+    const totalPixels = width * height;
+    if (totalPixels > PNG_EXPORT_MAX_PIXELS) {
+        const pixelScale = Math.sqrt(PNG_EXPORT_MAX_PIXELS / totalPixels);
+        width = Math.max(1, Math.floor(width * pixelScale));
+        height = Math.max(1, Math.floor(height * pixelScale));
     }
 
     return { width, height };
@@ -104,6 +137,139 @@ function stripCrossOriginImageNodes(svgElement) {
             imageNode.remove();
         }
     });
+}
+
+function trimCanvasTransparentEdges(canvas, padding = 2, alphaThreshold = 1) {
+    const context = canvas.getContext("2d");
+    if (!context) {
+        return canvas;
+    }
+
+    let imageData = null;
+    try {
+        imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    } catch (_error) {
+        // Tainted canvas cannot be inspected; return original.
+        return canvas;
+    }
+
+    const { data, width, height } = imageData;
+    let minX = width;
+    let minY = height;
+    let maxX = -1;
+    let maxY = -1;
+
+    for (let y = 0; y < height; y += 1) {
+        for (let x = 0; x < width; x += 1) {
+            const alpha = data[(y * width + x) * 4 + 3];
+            if (alpha < alphaThreshold) {
+                continue;
+            }
+            if (x < minX) minX = x;
+            if (y < minY) minY = y;
+            if (x > maxX) maxX = x;
+            if (y > maxY) maxY = y;
+        }
+    }
+
+    if (maxX < minX || maxY < minY) {
+        return canvas;
+    }
+
+    const left = Math.max(0, minX - padding);
+    const top = Math.max(0, minY - padding);
+    const right = Math.min(width - 1, maxX + padding);
+    const bottom = Math.min(height - 1, maxY + padding);
+    const trimmedWidth = right - left + 1;
+    const trimmedHeight = bottom - top + 1;
+
+    if (
+        trimmedWidth <= 0 ||
+        trimmedHeight <= 0 ||
+        (trimmedWidth === width && trimmedHeight === height)
+    ) {
+        return canvas;
+    }
+
+    const trimmedCanvas = document.createElement("canvas");
+    trimmedCanvas.width = trimmedWidth;
+    trimmedCanvas.height = trimmedHeight;
+    const trimmedContext = trimmedCanvas.getContext("2d");
+    if (!trimmedContext) {
+        return canvas;
+    }
+    trimmedContext.putImageData(context.getImageData(left, top, trimmedWidth, trimmedHeight), 0, 0);
+    return trimmedCanvas;
+}
+
+async function canvasToPngBlob(canvas) {
+    return new Promise((resolve, reject) => {
+        try {
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    resolve(blob);
+                    return;
+                }
+                reject(new Error("png encoding failed"));
+            }, "image/png");
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
+
+async function blobToImageBitmap(blob) {
+    if (typeof window.createImageBitmap === "function") {
+        try {
+            return await window.createImageBitmap(blob);
+        } catch (_error) {
+            // Fall through to Image-based decode.
+        }
+    }
+
+    const url = URL.createObjectURL(blob);
+    try {
+        const image = new Image();
+        image.decoding = "sync";
+        image.src = url;
+        await new Promise((resolve, reject) => {
+            image.onload = resolve;
+            image.onerror = reject;
+        });
+        return image;
+    } finally {
+        URL.revokeObjectURL(url);
+    }
+}
+
+async function normalizePngBlobBounds(pngBlob, { padding = 2, alphaThreshold = 1 } = {}) {
+    const drawable = await blobToImageBitmap(pngBlob);
+    const width = Math.max(1, Math.floor(drawable.width || 1));
+    const height = Math.max(1, Math.floor(drawable.height || 1));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    if (!context) {
+        return pngBlob;
+    }
+
+    context.clearRect(0, 0, width, height);
+    context.drawImage(drawable, 0, 0, width, height);
+    if (typeof drawable.close === "function") {
+        drawable.close();
+    }
+
+    const trimmedCanvas = trimCanvasTransparentEdges(canvas, padding, alphaThreshold);
+    return canvasToPngBlob(trimmedCanvas);
+}
+
+async function dataUrlToBlob(dataUrl) {
+    const response = await window.fetch(dataUrl);
+    if (!response.ok) {
+        throw new Error("failed to convert data url");
+    }
+    return response.blob();
 }
 
 function isSvgElement(node) {
@@ -175,8 +341,13 @@ function removeFullCanvasBackgroundRect(svgElement, fallbackWidth, fallbackHeigh
     }
 }
 
-function buildTransparentSvgMarkup(sourceSvg) {
+function buildTransparentSvgMarkup(sourceSvg, options = {}) {
+    const { targetWidth = null, targetHeight = null } = options;
     const { width: fallbackWidth, height: fallbackHeight } = resolveSvgExportDimensions(sourceSvg);
+    const effectiveWidth =
+        Math.max(1, Math.floor(parseNumericAttribute(targetWidth) || fallbackWidth || 1));
+    const effectiveHeight =
+        Math.max(1, Math.floor(parseNumericAttribute(targetHeight) || fallbackHeight || 1));
     const exportSvg = sourceSvg.cloneNode(true);
 
     if (!isSvgElement(exportSvg)) {
@@ -196,15 +367,11 @@ function buildTransparentSvgMarkup(sourceSvg) {
     if (!exportSvg.getAttribute("viewBox")) {
         exportSvg.setAttribute("viewBox", `0 0 ${fallbackWidth} ${fallbackHeight}`);
     }
-    if (!parseNumericAttribute(exportSvg.getAttribute("width"))) {
-        exportSvg.setAttribute("width", String(fallbackWidth));
-    }
-    if (!parseNumericAttribute(exportSvg.getAttribute("height"))) {
-        exportSvg.setAttribute("height", String(fallbackHeight));
-    }
+    exportSvg.setAttribute("width", String(effectiveWidth));
+    exportSvg.setAttribute("height", String(effectiveHeight));
 
     stripCrossOriginImageNodes(exportSvg);
-    removeFullCanvasBackgroundRect(exportSvg, fallbackWidth, fallbackHeight);
+    removeFullCanvasBackgroundRect(exportSvg, effectiveWidth, effectiveHeight);
     return new XMLSerializer().serializeToString(exportSvg);
 }
 
@@ -272,8 +439,18 @@ async function exportDiagramAsTransparentPng({ dom, fileNameManager, toast, t })
 
     try {
         const exportFileName = getPngExportFileName(fileNameManager.getEffectiveExportFileName());
-        const { width: exportWidth, height: exportHeight } = resolveSvgExportDimensions(sourceSvg);
-        const svgMarkup = buildTransparentSvgMarkup(sourceSvg);
+        const sourceFormat = String(dom.currentSourceModeBadge?.textContent || "").toLowerCase();
+        const trimPadding = sourceFormat.includes("mermaid") ? 8 : 4;
+        const { width: baseExportWidth, height: baseExportHeight } = resolveSvgExportDimensions(sourceSvg);
+        const { width: exportWidth, height: exportHeight } = resolveHighResolutionExportDimensions(
+            baseExportWidth,
+            baseExportHeight,
+            sourceFormat
+        );
+        const svgMarkup = buildTransparentSvgMarkup(sourceSvg, {
+            targetWidth: exportWidth,
+            targetHeight: exportHeight
+        });
         const svgBlob = new Blob([svgMarkup], { type: "image/svg+xml;charset=utf-8" });
 
         const canvas = document.createElement("canvas");
@@ -295,17 +472,14 @@ async function exportDiagramAsTransparentPng({ dom, fileNameManager, toast, t })
 
         let pngBlob = null;
         if (rendered) {
-            // Keep canvas alpha channel untouched to export transparent background PNG.
+            const trimmedCanvas = trimCanvasTransparentEdges(
+                canvas,
+                trimPadding,
+                2
+            );
             try {
-                pngBlob = await new Promise((resolve, reject) =>
-                    canvas.toBlob((blob) => {
-                        if (blob) {
-                            resolve(blob);
-                            return;
-                        }
-                        reject(new Error("png encoding failed"));
-                    }, "image/png")
-                );
+                // Keep canvas alpha channel untouched to export transparent background PNG.
+                pngBlob = await canvasToPngBlob(trimmedCanvas);
             } catch (_canvasExportError) {
                 pngBlob = null;
             }
@@ -314,20 +488,51 @@ async function exportDiagramAsTransparentPng({ dom, fileNameManager, toast, t })
         if (!pngBlob) {
             try {
                 const module = await loadHtmlToImageModule();
-                const hostRect = diagramHost.getBoundingClientRect();
-                const width = Math.max(1, Math.floor(hostRect.width || exportWidth || 1));
-                const height = Math.max(1, Math.floor(hostRect.height || exportHeight || 1));
+                const width = Math.max(1, Math.floor(exportWidth || sourceSvg.clientWidth || 1));
+                const height = Math.max(1, Math.floor(exportHeight || sourceSvg.clientHeight || 1));
                 if (typeof module?.toBlob === "function") {
-                    pngBlob = await module.toBlob(diagramHost, {
+                    pngBlob = await module.toBlob(sourceSvg, {
                         cacheBust: true,
                         backgroundColor: "rgba(0,0,0,0)",
-                        pixelRatio: 2,
+                        pixelRatio: 1,
                         width,
-                        height
+                        height,
+                        canvasWidth: width,
+                        canvasHeight: height,
+                        skipAutoScale: true,
+                        style: {
+                            transform: "none",
+                            background: "transparent",
+                            backgroundColor: "transparent"
+                        }
                     });
+                }
+                if (!pngBlob && typeof module?.toPng === "function") {
+                    const dataUrl = await module.toPng(sourceSvg, {
+                        cacheBust: true,
+                        backgroundColor: "rgba(0,0,0,0)",
+                        pixelRatio: 1,
+                        width,
+                        height,
+                        canvasWidth: width,
+                        canvasHeight: height,
+                        skipAutoScale: true
+                    });
+                    pngBlob = await dataUrlToBlob(dataUrl);
                 }
             } catch (_fallbackError) {
                 pngBlob = null;
+            }
+        }
+
+        if (pngBlob) {
+            try {
+                pngBlob = await normalizePngBlobBounds(pngBlob, {
+                    padding: trimPadding,
+                    alphaThreshold: 2
+                });
+            } catch (_normalizeError) {
+                // Keep original blob if normalization fails.
             }
         }
 
