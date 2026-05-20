@@ -63,6 +63,7 @@ export function createAiHistoryController({
     maxItems = 20
 }) {
     let entries = [];
+    let activeVersionIndex = -1;
 
     function readStoredHistory() {
         const list = readStoredJson(storageKey, []);
@@ -85,6 +86,9 @@ export function createAiHistoryController({
         entries.forEach((entry, index) => {
             const li = document.createElement("li");
             li.className = "border border-slate-200 rounded-md p-2 bg-slate-50";
+            if (index === activeVersionIndex) {
+                li.classList.add("ring-2", "ring-blue-300", "bg-blue-50");
+            }
 
             const layoutRow = document.createElement("div");
             layoutRow.className = "flex items-start gap-3";
@@ -109,11 +113,12 @@ export function createAiHistoryController({
             contentWrap.className = "min-w-0 flex-1";
 
             const topRow = document.createElement("div");
-            topRow.className = "flex items-center justify-between gap-2";
+            topRow.className = "flex items-center";
 
             const meta = document.createElement("span");
-            meta.className = "history-meta text-[11px] font-medium";
+            meta.className = "history-meta text-[11px] font-medium whitespace-nowrap";
             meta.textContent = `${t("history.itemLabel")} #${entries.length - index} · ${formatTimestamp(entry.timestamp)}`;
+            meta.title = meta.textContent;
 
             const restoreButton = document.createElement("button");
             restoreButton.type = "button";
@@ -147,7 +152,10 @@ export function createAiHistoryController({
             actions.appendChild(downloadButton);
 
             topRow.appendChild(meta);
-            topRow.appendChild(actions);
+
+            const actionRow = document.createElement("div");
+            actionRow.className = "mt-1 flex items-center gap-1.5";
+            actionRow.appendChild(actions);
 
             const promptLabel = document.createElement("div");
             promptLabel.className = "mt-1 text-[11px] font-semibold text-slate-600";
@@ -166,6 +174,7 @@ export function createAiHistoryController({
             resultText.textContent = entry.resultXml;
 
             contentWrap.appendChild(topRow);
+            contentWrap.appendChild(actionRow);
             contentWrap.appendChild(promptLabel);
             contentWrap.appendChild(promptText);
             contentWrap.appendChild(resultLabel);
@@ -206,12 +215,14 @@ export function createAiHistoryController({
         };
 
         entries = [entry, ...entries].slice(0, maxItems);
+        activeVersionIndex = 0;
         persist();
         render();
     }
 
     function clear() {
         entries = [];
+        activeVersionIndex = -1;
         persist();
         render();
     }
@@ -240,6 +251,8 @@ export function createAiHistoryController({
             }
 
             if (action === "restore") {
+                activeVersionIndex = index;
+                render();
                 onRestore(targetEntry);
                 showToast(t("toast.historyRestored"));
                 return;
@@ -273,13 +286,44 @@ export function createAiHistoryController({
 
     function initialize() {
         entries = readStoredHistory();
+        activeVersionIndex = entries.length ? 0 : -1;
         render();
         registerEvents();
+    }
+
+    function restoreByIndex(index, options = {}) {
+        const { showRestoredToast = false } = options;
+        if (!entries.length) {
+            return false;
+        }
+        const resolvedIndex = Math.max(0, Math.min(index, entries.length - 1));
+        const targetEntry = entries[resolvedIndex];
+        if (!targetEntry) {
+            return false;
+        }
+        activeVersionIndex = resolvedIndex;
+        render();
+        onRestore(targetEntry);
+        if (showRestoredToast) {
+            showToast(t("toast.historyRestored"));
+        }
+        return true;
+    }
+
+    function restoreRelative(step) {
+        if (!entries.length) {
+            return false;
+        }
+        if (!Number.isFinite(activeVersionIndex) || activeVersionIndex < 0) {
+            activeVersionIndex = 0;
+        }
+        return restoreByIndex(activeVersionIndex + step);
     }
 
     return {
         initialize,
         addEntry,
-        refreshTexts: render
+        refreshTexts: render,
+        restoreRelative
     };
 }

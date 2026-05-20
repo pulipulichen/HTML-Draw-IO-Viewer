@@ -1,5 +1,12 @@
 export function createShortcutsController(options) {
-    const { dom, viewer } = options;
+    const { dom, viewer, aiHistoryController } = options;
+
+    function focusAiPromptInput() {
+        dom.aiTabBtn.click();
+        dom.aiPrompt.focus();
+        const cursorPos = dom.aiPrompt.value.length;
+        dom.aiPrompt.setSelectionRange(cursorPos, cursorPos);
+    }
 
     function openShortcutsModal() {
         dom.shortcutsModal.classList.remove("hidden");
@@ -30,6 +37,12 @@ export function createShortcutsController(options) {
 
     function registerKeyboardShortcuts() {
         window.addEventListener("keydown", (event) => {
+            if (!event.ctrlKey && !event.metaKey && !event.altKey && event.key === "Tab") {
+                event.preventDefault();
+                focusAiPromptInput();
+                return;
+            }
+
             const isSaveShortcut =
                 (event.ctrlKey || event.metaKey) &&
                 !event.altKey &&
@@ -69,6 +82,30 @@ export function createShortcutsController(options) {
             if (lowerKey === "e") {
                 event.preventDefault();
                 dom.clearHighlightsBtn.click();
+                return;
+            }
+            if (lowerKey === "v") {
+                event.preventDefault();
+                dom.versionsTabBtn.click();
+                return;
+            }
+            if (lowerKey === "m") {
+                const minimapToggle = dom.viewerContainer.querySelector('[data-viewer-role="minimap-toggle"]');
+                if (minimapToggle instanceof HTMLButtonElement) {
+                    event.preventDefault();
+                    minimapToggle.click();
+                }
+                return;
+            }
+            const isVersionsPanelVisible = !dom.versionsTabPanel.classList.contains("hidden");
+            if (isVersionsPanelVisible && event.key === "PageDown") {
+                event.preventDefault();
+                aiHistoryController?.restoreRelative(1);
+                return;
+            }
+            if (isVersionsPanelVisible && event.key === "PageUp") {
+                event.preventDefault();
+                aiHistoryController?.restoreRelative(-1);
                 return;
             }
 

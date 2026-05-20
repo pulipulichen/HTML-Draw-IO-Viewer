@@ -153,6 +153,34 @@ function safeCanvasToDataUrl(canvas, mimeType = "image/png") {
     }
 }
 
+function hasMeaningfulPixels(canvas) {
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+        return false;
+    }
+    const width = canvas.width;
+    const height = canvas.height;
+    if (!width || !height) {
+        return false;
+    }
+    const sampleX = [0.1, 0.3, 0.5, 0.7, 0.9].map((ratio) => Math.min(width - 1, Math.max(0, Math.round(width * ratio))));
+    const sampleY = [0.1, 0.3, 0.5, 0.7, 0.9].map((ratio) => Math.min(height - 1, Math.max(0, Math.round(height * ratio))));
+    for (const y of sampleY) {
+        for (const x of sampleX) {
+            const pixel = ctx.getImageData(x, y, 1, 1).data;
+            if (!pixel || pixel.length < 4) {
+                continue;
+            }
+            const [r, g, b, a] = pixel;
+            const isNearWhite = r > 245 && g > 245 && b > 245;
+            if (a > 0 && !isNearWhite) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 export function createSelectionController({
     dom,
     t,
@@ -485,6 +513,9 @@ export function createSelectionController({
             containerRect.height,
             ratio
         );
+        if (!hasMeaningfulPixels(fullCanvas)) {
+            throw new Error("composed svg rendered blank");
+        }
         return {
             fullCanvas,
             highlightedCanvas
@@ -673,17 +704,29 @@ export function createSelectionController({
 
     async function captureViewerWithoutOverlay() {
         try {
-            return await captureViewerFromSvg();
+            const canvas = await captureViewerFromSvg();
+            if (!hasMeaningfulPixels(canvas)) {
+                throw new Error("svg snapshot blank");
+            }
+            return canvas;
         } catch (svgError) {
             console.warn("SVG 全圖擷取失敗，嘗試 SVG-only fallback:", svgError);
             try {
-                return await captureViewerFromSvgDataUrl();
+                const canvas = await captureViewerFromSvgDataUrl();
+                if (!hasMeaningfulPixels(canvas)) {
+                    throw new Error("svg data url snapshot blank");
+                }
+                return canvas;
             } catch (svgDataUrlError) {
                 console.warn("SVG dataURL 擷取失敗，改用 html2canvas (diagram-layer):", svgDataUrlError);
             }
 
             try {
-                return await captureDiagramLayerWithHtml2Canvas();
+                const canvas = await captureDiagramLayerWithHtml2Canvas();
+                if (!hasMeaningfulPixels(canvas)) {
+                    throw new Error("diagram layer html2canvas blank");
+                }
+                return canvas;
             } catch (diagramLayerError) {
                 console.warn("diagram-layer html2canvas 失敗，改用 viewer html2canvas:", diagramLayerError);
             }
@@ -743,6 +786,35 @@ export function createSelectionController({
     async function captureHighlightedContext() {
         if (!highlights.length) {
             throw new Error("no highlight");
+        }
+
+        try {
+            const composed = await captureViewerFromComposedSvg();
+            const highlightedDataUrl = safeCanvasToDataUrl(composed.highlightedCanvas);
+            const fullDataUrl = safeCanvasToDataUrl(composed.fullCanvas);
+            if (highlightedDataUrl && fullDataUrl) {
+                return {
+                    mimeType: "image/png",
+                    dataUrl: highlightedDataUrl,
+                    width: composed.highlightedCanvas.width,
+                    height: composed.highlightedCanvas.height,
+                    highlightCount: highlights.length,
+                    fullImage: {
+                        mimeType: "image/png",
+                        dataUrl: fullDataUrl,
+                        width: composed.fullCanvas.width,
+                        height: composed.fullCanvas.height
+                    },
+                    highlightedImage: {
+                        mimeType: "image/png",
+                        dataUrl: highlightedDataUrl,
+                        width: composed.highlightedCanvas.width,
+                        height: composed.highlightedCanvas.height
+                    }
+                };
+            }
+        } catch (composeError) {
+            console.warn("組合式 SVG 快照失敗，改用 raster fallback:", composeError);
         }
 
         let fullCanvas = null;

@@ -53,7 +53,7 @@ const uiStateController = createUiStateController({
     storageKeys: STORAGE_KEYS
 });
 
-const shortcutsController = createShortcutsController({ dom, viewer });
+let shortcutsController = null;
 const geminiSettingsController = createGeminiSettingsController({
     dom,
     t,
@@ -111,6 +111,12 @@ const aiHistoryController = createAiHistoryController({
         fileNameManager.markAiEdited(entry.timestamp);
         uiStateController.setActiveTab("editor");
     }
+});
+
+shortcutsController = createShortcutsController({
+    dom,
+    viewer,
+    aiHistoryController
 });
 
 async function loadExampleXml() {
