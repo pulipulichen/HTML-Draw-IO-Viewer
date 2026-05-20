@@ -3,6 +3,7 @@ export const STORAGE_KEYS = {
     apiKey: "drawio-viewer-gemini-api-key",
     model: "drawio-viewer-gemini-model",
     diagramXml: "drawio-viewer-diagram-xml",
+    currentFileName: "drawio-viewer-current-file-name",
     aiHistory: "drawio-viewer-ai-history",
     leftPanelTab: "drawio-viewer-left-panel-tab",
     aiPrompt: "drawio-viewer-ai-prompt",

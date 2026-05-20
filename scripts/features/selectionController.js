@@ -195,6 +195,7 @@ export function createSelectionController({
     let isDrawing = false;
     let selectionPointerId = null;
     let selectedRegionImage = null;
+    let diagramReferenceImage = null;
     let highlightMode = "rect";
     let highlightAction = "add";
     let draftStartPoint = null;
@@ -297,7 +298,8 @@ export function createSelectionController({
     }
 
     function renderSelectedRegionPreview() {
-        const hasImage = Boolean(selectedRegionImage);
+        const activeSnapshot = selectedRegionImage || diagramReferenceImage;
+        const hasImage = Boolean(activeSnapshot);
         dom.selectedRegionEmpty.classList.toggle("hidden", hasImage);
         dom.selectedRegionPreviewWrap.classList.toggle("hidden", !hasImage);
 
@@ -308,9 +310,20 @@ export function createSelectionController({
             return;
         }
 
-        dom.selectedRegionPreview.src = selectedRegionImage.highlightedImage?.dataUrl || selectedRegionImage.dataUrl;
-        dom.selectedRegionMeta.textContent =
-            `${selectedRegionImage.width} x ${selectedRegionImage.height}px · ${selectedRegionImage.highlightCount} highlights`;
+        dom.selectedRegionPreview.src =
+            selectedRegionImage?.highlightedImage?.dataUrl ||
+            selectedRegionImage?.dataUrl ||
+            diagramReferenceImage?.dataUrl ||
+            "";
+        if (selectedRegionImage) {
+            dom.selectedRegionMeta.textContent =
+                `${selectedRegionImage.width} x ${selectedRegionImage.height}px · ` +
+                `${selectedRegionImage.highlightCount} ${t("ai.snapshotHighlightsUnit", "highlights")}`;
+        } else {
+            dom.selectedRegionMeta.textContent =
+                `${diagramReferenceImage.width} x ${diagramReferenceImage.height}px · ` +
+                t("ai.snapshotTypeFull", "Full snapshot");
+        }
         setSelectionButtonsState();
     }
 
@@ -963,6 +976,39 @@ export function createSelectionController({
         };
     }
 
+    async function captureFullDiagramReferenceImage() {
+        let fullCanvas = null;
+        try {
+            fullCanvas = await captureViewerWithoutOverlay();
+            if (!hasMeaningfulPixels(fullCanvas)) {
+                throw new Error("full snapshot blank");
+            }
+        } catch (captureError) {
+            console.warn("完整快照擷取失敗，改用 fallback:", captureError);
+            try {
+                fullCanvas = await captureSvgOnlyFallback();
+            } catch (_fallbackError) {
+                const rect = dom.viewerContainer.getBoundingClientRect();
+                const ratio = window.devicePixelRatio || 1;
+                fullCanvas = createFallbackBlankCanvas(rect.width * ratio, rect.height * ratio);
+            }
+        }
+
+        const dataUrl =
+            (!isCanvasTainted(fullCanvas) && safeCanvasToDataUrl(fullCanvas)) ||
+            safeCanvasToDataUrl(createFallbackBlankCanvas(fullCanvas.width, fullCanvas.height));
+        if (!dataUrl) {
+            throw new Error("full snapshot export failed");
+        }
+
+        return {
+            mimeType: "image/png",
+            dataUrl,
+            width: fullCanvas.width,
+            height: fullCanvas.height
+        };
+    }
+
     function setSelectionMode(enabled) {
         isSelectionMode = enabled;
         dom.viewerContainer.dataset.interactionMode = enabled ? "select" : "pan";
@@ -986,6 +1032,7 @@ export function createSelectionController({
         highlights = [];
         syncNavigationLock();
         selectedRegionImage = null;
+        diagramReferenceImage = null;
         clearSelectionBox();
         draftPolygon = null;
         draftFreehandPoints = [];
@@ -1036,6 +1083,7 @@ export function createSelectionController({
         }
 
         selectedRegionImage = await captureHighlightedContext();
+        diagramReferenceImage = null;
         renderSelectedRegionPreview();
         onSelectionCaptured();
         showToast(t("toast.selectionCaptured"));
@@ -1088,6 +1136,26 @@ export function createSelectionController({
         dom.clearSelectedRegionBtn.addEventListener("click", () => {
             clearSelectedRegion();
             setSelectionMode(false);
+        });
+
+        dom.attachFullSnapshotBtn.addEventListener("click", async () => {
+            if (!dom.xmlInput.value.trim()) {
+                showToast(t("toast.noDiagramToSelect"), true);
+                return;
+            }
+            try {
+                diagramReferenceImage = await captureFullDiagramReferenceImage();
+                selectedRegionImage = null;
+                highlights = [];
+                syncNavigationLock();
+                setSelectionMode(false);
+                renderHighlightOverlay();
+                renderSelectedRegionPreview();
+                onSelectionCaptured();
+                showToast(t("toast.fullSnapshotAttached", "Full snapshot attached"));
+            } catch (_error) {
+                showToast(t("toast.fullSnapshotAttachFailed", "Failed to attach full snapshot"), true);
+            }
         });
 
         dom.viewerContainer.addEventListener("click", async (event) => {
@@ -1274,6 +1342,7 @@ export function createSelectionController({
         clearSelectedRegion,
         setSelectionMode,
         getSelectedRegionImage: () => selectedRegionImage,
+        getDiagramReferenceImage: () => diagramReferenceImage,
         refreshTexts: renderSelectedRegionPreview
     };
 }

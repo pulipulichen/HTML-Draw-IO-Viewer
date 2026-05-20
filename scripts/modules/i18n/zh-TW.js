@@ -59,7 +59,7 @@ window.I18N_TRANSLATIONS["zh-TW"] = {
     "ai.promptExampleOrgChart": "例如幫我產生隨機的組織架構圖",
     "ai.promptExampleIgTone": "幫我依照IG色調，調整現在的圖片",
     "ai.promptExampleCompactLayout": "讓框框之間距離更近，但要保留能夠顯示線條箭頭的距離。不要讓框框重疊。而框框也儘可能縮小到能夠顯示文字的程度。",
-    "ai.promptExampleMermaidToDrawio": "請把目前的 Mermaid 圖表完整轉換成 Draw.io（mxGraph）XML，保持流程、連線關係與節點語意一致。若有 subgraph，請在 Draw.io 以群組或容器呈現。",
+    "ai.promptExampleMermaidToDrawio": "請把目前的 Mermaid 圖表完整轉換成 Draw.io（mxGraph）XML，保持流程、連線關係與節點語意一致。若有 subgraph，請在 Draw.io 以群組或容器呈現。不要用 <!-- --> 撰寫註解。",
     "ai.referenceLabel": "參考檔案",
     "ai.referenceHint": "可附加參考檔案給 AI（txt/md/xml/json/js/css/html...）",
     "ai.selectReferencesBtn": "選擇檔案",
@@ -133,7 +133,8 @@ window.I18N_TRANSLATIONS["zh-TW"] = {
     "toast.promptRequired": "請輸入你想請 AI 修改的需求！",
     "toast.apiKeyRequired": "請輸入您的 Gemini API Key",
     "toast.aiUpdated": "AI 已完成圖表更新！",
-    "toast.aiDemoApplied": "已套用 AI Demo（翻譯成英文）結果",
+    "toast.aiDemoAppliedDrawio": "已套用 AI Demo（翻譯成英文）結果",
+    "toast.aiDemoAppliedMermaid": "已套用 AI Demo（切換為橫向）結果",
     "toast.aiRequestFailed": "AI 請求失敗",
     "toast.mermaidParseFailed": "Mermaid 解析失敗，請檢查語法是否正確。",
     "toast.mermaidOnlyConversion": "目前內容不是 Mermaid，無法進行轉換",
@@ -161,6 +162,11 @@ window.I18N_TRANSLATIONS["zh-TW"] = {
     "toast.currentXmlTooLargeForDrawioUrl": "目前 XML 太大，無法直接透過網址帶入，已改為下載檔案",
     "toast.failedOpenDrawioWithXml": "無法直接在 Draw.io 開啟目前 XML，已改為下載檔案",
     "ai.selectedRegionLabel": "標亮區域快照",
+    "ai.attachFullSnapshotBtn": "附上完整圖片",
     "ai.clearSelectedRegionBtn": "清除",
-    "ai.selectedRegionEmpty": "目前尚未建立標亮圖片"
+    "ai.selectedRegionEmpty": "目前尚未建立快照圖片",
+    "ai.snapshotHighlightsUnit": "個標亮區塊",
+    "ai.snapshotTypeFull": "完整圖片",
+    "toast.fullSnapshotAttached": "已附上完整圖片快照",
+    "toast.fullSnapshotAttachFailed": "附上完整圖片失敗，請再試一次"
 };

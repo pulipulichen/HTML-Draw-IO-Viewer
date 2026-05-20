@@ -30,6 +30,86 @@ export function registerAiEvents(options) {
             filePath: "./demo/mermaid_example2.mmd"
         }
     };
+    let shouldAttachMermaidReferenceImage = false;
+
+    function utf8ToBase64(text) {
+        const bytes = new TextEncoder().encode(text);
+        let binary = "";
+        bytes.forEach((byte) => {
+            binary += String.fromCharCode(byte);
+        });
+        return window.btoa(binary);
+    }
+
+    function getRenderedDiagramSvgElement() {
+        const diagramHost = dom.viewerContainer.querySelector('[data-viewer-role="diagram-host"]');
+        const hostCandidates = diagramHost ? Array.from(diagramHost.querySelectorAll("svg")) : [];
+        const fallbackCandidates = Array.from(dom.viewerContainer.querySelectorAll("svg"));
+        const candidates = [...hostCandidates, ...fallbackCandidates];
+        if (!candidates.length) {
+            return null;
+        }
+
+        let bestElement = null;
+        let bestArea = 0;
+        candidates.forEach((candidate) => {
+            if (!(candidate instanceof SVGElement)) {
+                return;
+            }
+            const rect = candidate.getBoundingClientRect();
+            if (!rect.width || !rect.height) {
+                return;
+            }
+            const area = rect.width * rect.height;
+            if (area > bestArea) {
+                bestArea = area;
+                bestElement = candidate;
+            }
+        });
+        return bestElement;
+    }
+
+    function captureCurrentMermaidDiagramImage() {
+        const sourceSvg = getRenderedDiagramSvgElement();
+        if (!(sourceSvg instanceof SVGElement)) {
+            return null;
+        }
+        const rect = sourceSvg.getBoundingClientRect();
+        const viewBox = sourceSvg.viewBox?.baseVal;
+        const hasViewBoxWidth = viewBox && Number.isFinite(viewBox.width) && viewBox.width > 0;
+        const hasViewBoxHeight = viewBox && Number.isFinite(viewBox.height) && viewBox.height > 0;
+        const width = (hasViewBoxWidth ? Math.round(viewBox.width) : Math.round(rect.width)) || 0;
+        const height = (hasViewBoxHeight ? Math.round(viewBox.height) : Math.round(rect.height)) || 0;
+        if (!width || !height) {
+            return null;
+        }
+
+        const clonedSvg = sourceSvg.cloneNode(true);
+        if (!(clonedSvg instanceof SVGElement)) {
+            return null;
+        }
+        if (!clonedSvg.getAttribute("xmlns")) {
+            clonedSvg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+        }
+        if (!clonedSvg.getAttribute("xmlns:xlink")) {
+            clonedSvg.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+        }
+        clonedSvg.setAttribute("width", String(width));
+        clonedSvg.setAttribute("height", String(height));
+        if (!clonedSvg.getAttribute("viewBox")) {
+            clonedSvg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        }
+
+        const serializedSvg = new XMLSerializer().serializeToString(clonedSvg);
+        const dataUrl = `data:image/svg+xml;base64,${utf8ToBase64(serializedSvg)}`;
+        return {
+            mimeType: "image/svg+xml",
+            dataUrl,
+            width,
+            height
+        };
+    }
+
     function looksLikeDrawioXml(text) {
         const normalized = text.trim();
         if (!normalized.startsWith("<")) {
@@ -50,6 +130,7 @@ export function registerAiEvents(options) {
         if (target.dataset.action === "clearPrompt") {
             dom.aiPrompt.value = "";
             writeStoredValue(storageKeys.aiPrompt, "");
+            shouldAttachMermaidReferenceImage = false;
             dom.aiPrompt.focus();
             return;
         }
@@ -61,6 +142,7 @@ export function registerAiEvents(options) {
 
         dom.aiPrompt.value = t(promptKey);
         writeStoredValue(storageKeys.aiPrompt, dom.aiPrompt.value);
+        shouldAttachMermaidReferenceImage = promptKey === "ai.promptExampleMermaidToDrawio";
         dom.aiPrompt.focus();
         const cursorPos = dom.aiPrompt.value.length;
         dom.aiPrompt.setSelectionRange(cursorPos, cursorPos);
@@ -97,6 +179,19 @@ export function registerAiEvents(options) {
         setAiLoading(true);
         try {
             const usedSelectedRegionImage = selectionController.getSelectedRegionImage();
+            let diagramReferenceImage = selectionController.getDiagramReferenceImage();
+            let mermaidReferenceImage = null;
+            if (
+                !usedSelectedRegionImage &&
+                !diagramReferenceImage &&
+                shouldAttachMermaidReferenceImage &&
+                currentSourceFormat === "mermaid"
+            ) {
+                mermaidReferenceImage = captureCurrentMermaidDiagramImage();
+            }
+            if (!diagramReferenceImage) {
+                diagramReferenceImage = mermaidReferenceImage;
+            }
             const referenceFiles = referenceFilesController.getFiles();
             const resultXml = await requestAiXml({
                 prompt,
@@ -105,6 +200,7 @@ export function registerAiEvents(options) {
                 model,
                 referenceFiles,
                 selectedRegionImage: usedSelectedRegionImage,
+                diagramReferenceImage,
                 sourceFormat: currentSourceFormat
             });
 
@@ -128,6 +224,7 @@ export function registerAiEvents(options) {
             });
             dom.aiPrompt.value = "";
             writeStoredValue(storageKeys.aiPrompt, "");
+            shouldAttachMermaidReferenceImage = false;
             toast.show(t("toast.aiUpdated"));
         } catch (error) {
             console.error("AI 請求失敗:", error);
@@ -168,7 +265,11 @@ export function registerAiEvents(options) {
                 fileName: fileNameManager.getEffectiveExportFileName(),
                 thumbnailDataUrl
             });
-            toast.show(t("toast.aiDemoApplied"));
+            let demoToastKey = "toast.aiDemoAppliedDrawio";
+            if (currentSourceFormat === "mermaid") {
+                demoToastKey = "toast.aiDemoAppliedMermaid";
+            }
+            toast.show(t(demoToastKey));
         } catch (error) {
             console.error("AI Demo 載入失敗:", error);
             toast.show(`${t("toast.aiRequestFailed")}: ${error.message}`, true);

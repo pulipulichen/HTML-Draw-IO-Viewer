@@ -60,7 +60,7 @@ window.I18N_TRANSLATIONS.en = {
     "ai.promptExampleOrgChart": "Generate a random organizational chart for me.",
     "ai.promptExampleIgTone": "Adjust the current image using an Instagram-like color tone.",
     "ai.promptExampleCompactLayout": "Bring the boxes closer together, but keep enough space for connector lines and arrowheads to remain visible. Do not let boxes overlap. Also shrink each box as much as possible while still fitting its text.",
-    "ai.promptExampleMermaidToDrawio": "Please convert the current Mermaid diagram into Draw.io (mxGraph) XML while preserving flow, connections, and node semantics. If there are subgraphs, represent them as groups or containers in Draw.io.",
+    "ai.promptExampleMermaidToDrawio": "Please convert the current Mermaid diagram into Draw.io (mxGraph) XML while preserving flow, connections, and node semantics. If there are subgraphs, represent them as groups or containers in Draw.io. Do not use <!-- --> comments.",
     "ai.referenceLabel": "Reference Files",
     "ai.referenceHint": "Attach files for AI context (txt/md/xml/json/js/css/html...)",
     "ai.selectReferencesBtn": "Select files",
@@ -134,7 +134,8 @@ window.I18N_TRANSLATIONS.en = {
     "toast.promptRequired": "Please describe what you want AI to modify",
     "toast.apiKeyRequired": "Please enter your Gemini API Key",
     "toast.aiUpdated": "AI has updated the diagram",
-    "toast.aiDemoApplied": "Applied AI demo result (translated to English)",
+    "toast.aiDemoAppliedDrawio": "Applied AI demo result (translated to English)",
+    "toast.aiDemoAppliedMermaid": "Applied AI demo result (switched to horizontal layout)",
     "toast.aiRequestFailed": "AI request failed",
     "toast.mermaidParseFailed": "Mermaid parse failed, please check the syntax",
     "toast.mermaidOnlyConversion": "Current source is not Mermaid, conversion is unavailable",
@@ -162,6 +163,11 @@ window.I18N_TRANSLATIONS.en = {
     "toast.currentXmlTooLargeForDrawioUrl": "Current XML is too large for direct URL import, downloaded file instead",
     "toast.failedOpenDrawioWithXml": "Failed to open current XML in Draw.io, downloaded file instead",
     "ai.selectedRegionLabel": "Highlighted Snapshot",
+    "ai.attachFullSnapshotBtn": "Attach Full Snapshot",
     "ai.clearSelectedRegionBtn": "Clear",
-    "ai.selectedRegionEmpty": "No highlighted image yet."
+    "ai.selectedRegionEmpty": "No snapshot image yet.",
+    "ai.snapshotHighlightsUnit": "highlights",
+    "ai.snapshotTypeFull": "Full snapshot",
+    "toast.fullSnapshotAttached": "Full snapshot attached",
+    "toast.fullSnapshotAttachFailed": "Failed to attach full snapshot, please try again"
 };

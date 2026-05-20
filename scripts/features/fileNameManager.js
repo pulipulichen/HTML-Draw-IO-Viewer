@@ -1,6 +1,12 @@
 export function createFileNameManager(options) {
-    const { defaultFileName, fileNameInput } = options;
-    let sourceFileName = defaultFileName;
+    const {
+        defaultFileName,
+        fileNameInput,
+        readStoredValue = () => "",
+        writeStoredValue = () => {},
+        storageKey = ""
+    } = options;
+    let sourceFileName = sanitizeFileName(readStoredValue(storageKey) || defaultFileName);
     let aiEditedAt = null;
 
     function sanitizeFileName(fileName) {
@@ -41,6 +47,9 @@ export function createFileNameManager(options) {
     function setSourceFileName(nextFileName, config = {}) {
         const { preserveAiEditFlag = false } = config;
         sourceFileName = sanitizeFileName(nextFileName);
+        if (storageKey) {
+            writeStoredValue(storageKey, sourceFileName);
+        }
         if (!preserveAiEditFlag) {
             aiEditedAt = null;
         }

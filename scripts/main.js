@@ -38,7 +38,10 @@ const viewer = createDiagramViewer(dom.viewerContainer, (message) => toast.show(
 
 const fileNameManager = createFileNameManager({
     defaultFileName: DEFAULT_DIAGRAM_FILE_NAME,
-    fileNameInput: dom.currentFileNameInput
+    fileNameInput: dom.currentFileNameInput,
+    readStoredValue,
+    writeStoredValue,
+    storageKey: STORAGE_KEYS.currentFileName
 });
 
 const uiStateController = createUiStateController({

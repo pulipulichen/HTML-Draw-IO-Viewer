@@ -53,6 +53,7 @@ export function getDomElements() {
         selectedRegionPreviewWrap: getRequiredElement("selectedRegionPreviewWrap"),
         selectedRegionPreview: getRequiredElement("selectedRegionPreview"),
         selectedRegionMeta: getRequiredElement("selectedRegionMeta"),
+        attachFullSnapshotBtn: getRequiredElement("attachFullSnapshotBtn"),
         clearSelectedRegionBtn: getRequiredElement("clearSelectedRegionBtn"),
         askAiBtn: getRequiredElement("askAiBtn"),
         askAiBtnText: getRequiredElement("askAiBtnText"),

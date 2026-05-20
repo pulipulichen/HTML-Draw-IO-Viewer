@@ -71,16 +71,20 @@ function buildUserPrompt(
     prompt,
     referenceFiles = [],
     highlightContext = null,
+    diagramReferenceImage = null,
     sourceFormat = "drawio"
 ) {
     const referenceContext = buildReferenceContext(referenceFiles);
+    let diagramReferenceHint = "";
+    if (diagramReferenceImage && !highlightContext) {
+        diagramReferenceHint =
+            "\n\n另外我附上一張目前圖表快照，請把它當成結構與連線的視覺參考，避免轉換後遺漏節點或關係。";
+    }
     let selectedRegionHint = "";
     if (highlightContext) {
         const width = Number.isFinite(highlightContext.width) ? highlightContext.width : 0;
         const height = Number.isFinite(highlightContext.height) ? highlightContext.height : 0;
-        const highlightCount = Number.isFinite(highlightContext.highlightCount)
-            ? highlightContext.highlightCount
-            : 0;
+        const highlightCount = Number.isFinite(highlightContext.highlightCount) ? highlightContext.highlightCount : 0;
         selectedRegionHint =
             "\n\n另外我提供了兩張圖片：" +
             "\n1) 目前整張圖表截圖（完整內容）" +
@@ -93,16 +97,16 @@ function buildUserPrompt(
 
     if (currentXml) {
         if (sourceFormat === "mermaid") {
-            return `這是我目前的 Mermaid 語法:\n\n${currentXml}\n\n請直接修改 Mermaid 原始碼並回傳完整結果。除非我明確要求轉成 Draw.io/XML，否則不要回傳 XML。使用者的需求：${prompt}${referenceContext}${selectedRegionHint}`;
+            return `這是我目前的 Mermaid 語法:\n\n${currentXml}\n\n請直接修改 Mermaid 原始碼並回傳完整結果。除非我明確要求轉成 Draw.io/XML，否則不要回傳 XML。使用者的需求：${prompt}${referenceContext}${diagramReferenceHint}${selectedRegionHint}`;
         }
-        return `這是我目前的 Draw.io XML 程式碼:\n\n${currentXml}\n\n使用者的修改需求：${prompt}${referenceContext}${selectedRegionHint}`;
+        return `這是我目前的 Draw.io XML 程式碼:\n\n${currentXml}\n\n使用者的修改需求：${prompt}${referenceContext}${diagramReferenceHint}${selectedRegionHint}`;
     }
 
     if (sourceFormat === "mermaid") {
-        return `目前任務是 Mermaid 模式。預設請回傳 Mermaid 原始碼；只有在我明確要求轉成 Draw.io/XML 時才回傳 Draw.io XML。使用者的需求：${prompt}${referenceContext}${selectedRegionHint}`;
+        return `目前任務是 Mermaid 模式。預設請回傳 Mermaid 原始碼；只有在我明確要求轉成 Draw.io/XML 時才回傳 Draw.io XML。使用者的需求：${prompt}${referenceContext}${diagramReferenceHint}${selectedRegionHint}`;
     }
 
-    return `請幫我產生一個全新的 Draw.io 圖表。使用者的需求：${prompt}${referenceContext}${selectedRegionHint}`;
+    return `請幫我產生一個全新的 Draw.io 圖表。使用者的需求：${prompt}${referenceContext}${diagramReferenceHint}${selectedRegionHint}`;
 }
 
 function toInlineImagePart(image) {
@@ -227,6 +231,7 @@ export async function requestAiXml({
     model,
     referenceFiles = [],
     selectedRegionImage = null,
+    diagramReferenceImage = null,
     sourceFormat = "drawio"
 }) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
@@ -235,10 +240,15 @@ export async function requestAiXml({
         prompt,
         referenceFiles,
         selectedRegionImage,
+        diagramReferenceImage,
         sourceFormat
     );
     const systemPrompt = await loadSystemPrompt(sourceFormat);
     const contentParts = [{ text: userPrompt }];
+    const diagramReferenceImagePart = toInlineImagePart(diagramReferenceImage);
+    if (diagramReferenceImagePart) {
+        contentParts.push(diagramReferenceImagePart);
+    }
     contentParts.push(...getInlineImageParts(selectedRegionImage));
     const payload = {
         contents: [{ parts: contentParts }],

@@ -200,7 +200,10 @@
                         <div class="mt-3 border border-indigo-200 rounded-md bg-white p-3">
                             <div class="flex items-center justify-between mb-2">
                                 <label class="block text-xs font-medium text-indigo-700" data-i18n="ai.selectedRegionLabel">Highlighted Snapshot</label>
-                                <button id="clearSelectedRegionBtn" type="button" class="text-xs text-indigo-700 hover:text-indigo-900 font-medium" data-i18n="ai.clearSelectedRegionBtn">Clear</button>
+                                <div class="flex items-center gap-2">
+                                    <button id="attachFullSnapshotBtn" type="button" class="text-xs text-indigo-700 hover:text-indigo-900 font-medium" data-i18n="ai.attachFullSnapshotBtn">Attach Full Snapshot</button>
+                                    <button id="clearSelectedRegionBtn" type="button" class="text-xs text-indigo-700 hover:text-indigo-900 font-medium" data-i18n="ai.clearSelectedRegionBtn">Clear</button>
+                                </div>
                             </div>
                             <p id="selectedRegionEmpty" class="text-xs text-indigo-700/70" data-i18n="ai.selectedRegionEmpty">No highlighted image yet.</p>
                             <div id="selectedRegionPreviewWrap" class="hidden">
