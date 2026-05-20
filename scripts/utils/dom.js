@@ -26,6 +26,7 @@ export function getDomElements() {
         uploadBtn: getRequiredElement("uploadBtn"),
         downloadXmlBtn: getRequiredElement("downloadXmlBtn"),
         downloadPngBtn: getRequiredElement("downloadPngBtn"),
+        downloadPngFloatingBtn: getRequiredElement("downloadPngFloatingBtn"),
         openInDrawioBtn: getRequiredElement("openInDrawioBtn"),
         openDrawioLink: getRequiredElement("openDrawioLink"),
         currentFileNameInput: getRequiredElement("currentFileNameInput"),
@@ -72,6 +73,7 @@ export function getDomElements() {
         eraseHighlightBtn: getRequiredElement("eraseHighlightBtn"),
         clearHighlightsBtn: getRequiredElement("clearHighlightsBtn"),
         selectionBox: getRequiredElement("selectionBox"),
-        aiLoadingOverlay: getRequiredElement("aiLoadingOverlay")
+        aiLoadingOverlay: getRequiredElement("aiLoadingOverlay"),
+        pngExportLoadingOverlay: getRequiredElement("pngExportLoadingOverlay")
     };
 }

@@ -30,10 +30,17 @@ test("renders Mermaid source and shows conversion button", async ({ page }) => {
     await page.click("#formatBtn");
 
     await expect(page.locator("#viewerContainer [data-viewer-role='diagram-host'] svg")).toBeVisible();
+
+    // convertMermaidBtn 位於 AI 分頁面板內，需先切到該分頁才會真的顯示出來
+    await page.click("#aiTabBtn");
     await expect(page.locator("#convertMermaidBtn")).toBeVisible();
 
+    // 切回編輯器分頁才能操作 sourceFormatSelect / formatBtn；
+    // 先清空 xmlInput 再切到 drawio 模式，避免把 Mermaid 內容餵給 drawio viewer
+    // (viewer-static.min.js 會在 console 印出 "Not a diagram file" 影響 consoleErrors 斷言)
+    await page.click("#editorTabBtn");
+    await page.click("#clearXmlBtn");
     await page.selectOption("#sourceFormatSelect", "drawio");
-    await page.click("#formatBtn");
     await expect(page.locator("#convertMermaidBtn")).toBeHidden();
 
     expect(consoleErrors).toHaveLength(0);
@@ -49,8 +56,11 @@ test("loads .mmd file and keeps mermaid format behavior", async ({ page }) => {
     await page.setInputFiles("#fileInput", samplePath);
 
     await expect(page.locator("#sourceFormatSelect")).toHaveValue("mermaid");
-    await expect(page.locator("#xmlInput")).toContainText("flowchart TD");
+    // textarea 的 value 必須用 toHaveValue 檢查（toContainText 只看 textContent，無法反映程式化設定的 value）
+    await expect(page.locator("#xmlInput")).toHaveValue(/flowchart TD/);
     await expect(page.locator("#viewerContainer [data-viewer-role='diagram-host'] svg")).toBeVisible();
+
+    await page.click("#aiTabBtn");
     await expect(page.locator("#convertMermaidBtn")).toBeVisible();
 
     expect(consoleErrors).toHaveLength(0);

@@ -10,6 +10,8 @@
 - Added Mermaid sample assets and moved all sample files under `demo/` (`example.drawio`, `example2.drawio`, `example.mmd`, `example2.mmd`).
 - Added Mermaid E2E coverage in `e2e/mermaid.spec.js` for Mermaid render path and `.mmd` file import behavior.
 - Added `sourceFormat` persistence in `localStorage` to keep user format preference across reloads.
+- Added a local bundled Traditional Chinese font asset (`assets/fonts/NotoSansTC-wght.ttf`) for PNG export font embedding without remote font dependencies.
+- Added `scripts/services/fontEmbedService.js` to fetch, convert, and cache the embedded font as a Data URI for repeated exports.
 
 ### Changed
 
@@ -27,12 +29,17 @@
 - Updated Versions card header layout so `Restore this version` is rendered on its own row.
 - Removed the redundant top-level current-mode badge from the Versions tab to avoid duplicate mode indicators.
 - Updated dependency directory tracking to keep `node_modules` ignored in Git and use the external `/deps/node_modules` symlink target.
+- Updated PNG export sanitization to inject an embedded `@font-face` (Data URI) and prefer local Noto Sans TC for consistent Traditional Chinese glyph rendering.
+- Updated service-worker pre-cache entries and cache versioning to include the local font asset and font embedding service for offline/repeated export performance.
+- Updated preview top-right quick export control text to `Export PNG` while keeping the original left-panel transparent PNG download action unchanged.
 
 ### Fixed
 
 - Fixed selected version-card highlight clipping at the top/left edges of the scroll container by using an inset ring style.
 - Fixed Mermaid preview failures for pasted Markdown fenced code blocks by normalizing Mermaid input before rendering.
 - Fixed Mermaid `Syntax error in text` rendering cases by adding pre-render Mermaid parse validation and defensive error handling for error-markup SVG output.
+- Fixed PNG export canvas taint issues caused by remote web-font fetching during SVG rasterization by fully switching export text rendering to local embedded font data.
+- Fixed Mermaid E2E instability in `e2e/mermaid.spec.js` by asserting `#convertMermaidBtn` from the AI tab context, switching textarea checks to `toHaveValue`, and avoiding expected Draw.io parser console errors during format toggles.
 
 ## 0.0.1
 

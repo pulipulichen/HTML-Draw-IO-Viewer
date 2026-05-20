@@ -27,6 +27,8 @@ window.I18N_TRANSLATIONS["zh-TW"] = {
     "export.currentFileLabel": "目前檔名",
     "export.downloadBtn": "下載 XML",
     "export.downloadTransparentPngBtn": "下載透明 PNG",
+    "export.exportPngBtn": "Export PNG",
+    "export.pngExportLoading": "產生透明 PNG 中，請稍候…",
     "export.openCurrentInDrawioBtn": "用 Draw.io 開啟目前 XML",
     "export.openDrawioLink": "開啟 Draw.io",
     "ai.title": "Gemini AI 助手",

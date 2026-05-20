@@ -1,3 +1,5 @@
+import { getEmbeddedNotoSansTcFontDataUri } from "../services/fontEmbedService.js";
+
 function triggerXmlDownload(xmlText, fileName) {
     const blob = new Blob([xmlText], { type: "application/xml;charset=utf-8" });
     const blobUrl = URL.createObjectURL(blob);
@@ -139,21 +141,63 @@ function stripCrossOriginImageNodes(svgElement) {
     });
 }
 
-function sanitizeSvgForCanvasExport(svgElement) {
+function sanitizeSvgForCanvasExport(svgElement, options = {}) {
+    const { embeddedFontDataUri = "" } = options;
     // Remove <style> nodes that reference external resources (@font-face / @import)
     // since loading them while rasterizing the SVG taints the canvas and blocks
-    // toBlob/toDataURL. We can safely drop these because Draw.io and Mermaid
-    // both inline their visual styling either via attributes or simpler rules.
+    // toBlob/toDataURL.
     const styleNodes = Array.from(svgElement.querySelectorAll("style"));
     styleNodes.forEach((styleNode) => {
         const css = String(styleNode.textContent || "");
         const referencesExternal =
-            /@font-face/i.test(css) ||
             /@import/i.test(css) ||
-            /url\(\s*['"]?https?:/i.test(css);
+            /url\(\s*['"]?(https?:|\/\/)/i.test(css);
         if (referencesExternal) {
             styleNode.remove();
         }
+    });
+
+    // Inject a style block that pins every text node to system fonts. Draw.io
+    // renders text inside <foreignObject> using whatever font-family is set on
+    // the HTML, which the browser will then fetch from external CDNs while
+    // rasterizing the SVG (this is what taints the canvas). Forcing a generic
+    // sans-serif keeps the text visible without triggering any external font
+    // download.
+    const fontGuardStyle = document.createElementNS("http://www.w3.org/2000/svg", "style");
+    const embeddedFontFaceCss = embeddedFontDataUri
+        ? "@font-face { font-family: 'Embedded Noto Sans TC'; font-style: normal; font-weight: 100 900; src: url('" +
+          embeddedFontDataUri +
+          "') format('truetype'); }\n"
+        : "";
+    const preferredFamily = embeddedFontDataUri ? "'Embedded Noto Sans TC', " : "";
+    fontGuardStyle.textContent =
+        embeddedFontFaceCss +
+        `*, *::before, *::after { font-family: ${preferredFamily}'Noto Sans TC', 'Noto Sans CJK TC', 'PingFang TC', 'Microsoft JhengHei', 'Heiti TC', sans-serif !important; }`;
+    svgElement.insertBefore(fontGuardStyle, svgElement.firstChild);
+
+    // Strip inline font-family declarations that might still point at external
+    // web fonts. This catches both `font-family` style attributes on SVG nodes
+    // and font-family rules embedded inside foreignObject HTML content.
+    const elementsWithStyle = Array.from(svgElement.querySelectorAll("[style]"));
+    elementsWithStyle.forEach((node) => {
+        const style = String(node.getAttribute("style") || "");
+        if (!style) {
+            return;
+        }
+        const cleaned = style.replace(/font-family\s*:[^;]*;?/gi, "").trim();
+        if (cleaned !== style) {
+            if (cleaned) {
+                node.setAttribute("style", cleaned);
+            } else {
+                node.removeAttribute("style");
+            }
+        }
+    });
+    const elementsWithFontFamilyAttr = Array.from(
+        svgElement.querySelectorAll("[font-family]")
+    );
+    elementsWithFontFamilyAttr.forEach((node) => {
+        node.removeAttribute("font-family");
     });
 
     const elementsWithExternalRefs = Array.from(
@@ -388,7 +432,7 @@ function removeFullCanvasBackgroundRect(svgElement, fallbackWidth, fallbackHeigh
 }
 
 function buildTransparentSvgMarkup(sourceSvg, options = {}) {
-    const { targetWidth = null, targetHeight = null } = options;
+    const { targetWidth = null, targetHeight = null, embeddedFontDataUri = "" } = options;
     const { width: naturalWidth, height: naturalHeight } = resolveSvgExportDimensions(sourceSvg);
     const renderWidth = Math.max(
         1,
@@ -425,7 +469,7 @@ function buildTransparentSvgMarkup(sourceSvg, options = {}) {
     exportSvg.setAttribute("preserveAspectRatio", "xMidYMid meet");
 
     stripCrossOriginImageNodes(exportSvg);
-    sanitizeSvgForCanvasExport(exportSvg);
+    sanitizeSvgForCanvasExport(exportSvg, { embeddedFontDataUri });
     removeFullCanvasBackgroundRect(exportSvg, naturalWidth, naturalHeight);
     return new XMLSerializer().serializeToString(exportSvg);
 }
@@ -486,18 +530,18 @@ async function exportDiagramAsTransparentPng({ dom, fileNameManager, toast, t })
             baseExportHeight,
             sourceFormat
         );
+        let embeddedFontDataUri = "";
+        try {
+            embeddedFontDataUri = await getEmbeddedNotoSansTcFontDataUri();
+        } catch (_fontLoadError) {
+            // Embedded font is optional; rasterization will fall back to system fonts.
+        }
         const svgMarkup = buildTransparentSvgMarkup(sourceSvg, {
             targetWidth: exportWidth,
-            targetHeight: exportHeight
+            targetHeight: exportHeight,
+            embeddedFontDataUri
         });
         const svgBlob = new Blob([svgMarkup], { type: "image/svg+xml;charset=utf-8" });
-        console.debug("[PNG export]", {
-            baseExportWidth,
-            baseExportHeight,
-            exportWidth,
-            exportHeight,
-            sourceFormat
-        });
 
         const canvas = document.createElement("canvas");
         canvas.width = exportWidth;
@@ -523,24 +567,18 @@ async function exportDiagramAsTransparentPng({ dom, fileNameManager, toast, t })
                 trimPadding,
                 2
             );
-            console.debug("[PNG export] trimmed", {
-                canvas: { width: canvas.width, height: canvas.height },
-                trimmed: { width: trimmedCanvas.width, height: trimmedCanvas.height }
-            });
             try {
                 // Keep canvas alpha channel untouched to export transparent background PNG.
                 pngBlob = await canvasToPngBlob(trimmedCanvas);
-                console.debug("[PNG export] main path produced blob", {
-                    bytes: pngBlob?.size
-                });
-            } catch (canvasExportError) {
-                console.warn("[PNG export] canvas.toBlob failed:", canvasExportError);
+            } catch (_canvasExportError) {
+                // canvas.toBlob can throw SecurityError when the canvas is tainted
+                // by cross-origin resources rendered into the SVG; fall through to
+                // the html-to-image renderer which performs its own inlining.
                 pngBlob = null;
             }
         }
 
         if (!pngBlob) {
-            console.warn("[PNG export] main path produced no blob, using fallback renderer");
             try {
                 const module = await loadHtmlToImageModule();
                 // Render the enlarged stand-alone SVG markup off-screen instead of the
@@ -563,12 +601,16 @@ async function exportDiagramAsTransparentPng({ dom, fileNameManager, toast, t })
                     offscreenSvg.style.width = `${exportWidth}px`;
                     offscreenSvg.style.height = `${exportHeight}px`;
                 }
+                // html-to-image tends to render SVG element content at roughly half of
+                // the requested canvas size in some browsers. Bump pixelRatio so the
+                // produced bitmap still hits the target dimensions.
+                const fallbackPixelRatio = 3;
                 try {
                     if (offscreenSvg && typeof module?.toBlob === "function") {
                         pngBlob = await module.toBlob(offscreenSvg, {
                             cacheBust: true,
                             backgroundColor: "rgba(0,0,0,0)",
-                            pixelRatio: 1,
+                            pixelRatio: fallbackPixelRatio,
                             width: exportWidth,
                             height: exportHeight,
                             canvasWidth: exportWidth,
@@ -585,7 +627,7 @@ async function exportDiagramAsTransparentPng({ dom, fileNameManager, toast, t })
                         const dataUrl = await module.toPng(offscreenSvg, {
                             cacheBust: true,
                             backgroundColor: "rgba(0,0,0,0)",
-                            pixelRatio: 1,
+                            pixelRatio: fallbackPixelRatio,
                             width: exportWidth,
                             height: exportHeight,
                             canvasWidth: exportWidth,
@@ -597,35 +639,25 @@ async function exportDiagramAsTransparentPng({ dom, fileNameManager, toast, t })
                 } finally {
                     offscreenHost.remove();
                 }
-                console.debug("[PNG export] fallback produced blob", {
-                    bytes: pngBlob?.size
-                });
-            } catch (fallbackError) {
-                console.warn("[PNG export] fallback renderer failed:", fallbackError);
+            } catch (_fallbackError) {
                 pngBlob = null;
             }
         }
 
         if (pngBlob) {
             try {
-                const before = pngBlob;
                 pngBlob = await normalizePngBlobBounds(pngBlob, {
                     padding: trimPadding,
                     alphaThreshold: 2
                 });
-                console.debug("[PNG export] normalized", {
-                    beforeBytes: before.size,
-                    afterBytes: pngBlob?.size
-                });
-            } catch (normalizeError) {
-                console.warn("[PNG export] normalize failed:", normalizeError);
+            } catch (_normalizeError) {
+                // Keep the un-normalized blob if trimming fails for any reason.
             }
         }
 
         if (!pngBlob) {
             throw new Error("png encoding failed");
         }
-        console.debug("[PNG export] final blob bytes:", pngBlob.size);
 
         const pngUrl = URL.createObjectURL(pngBlob);
         const anchor = document.createElement("a");
@@ -824,8 +856,54 @@ export function registerExportEvents(options) {
         toast.show(t("toast.openedDrawio"));
     });
 
+    if (dom.downloadPngFloatingBtn) {
+        dom.downloadPngFloatingBtn.addEventListener("click", () => {
+            dom.downloadPngBtn.click();
+        });
+    }
+
     dom.downloadPngBtn.addEventListener("click", async () => {
-        await exportDiagramAsTransparentPng({ dom, fileNameManager, toast, t });
+        const overlay = dom.pngExportLoadingOverlay;
+        const showOverlay = () => {
+            if (!overlay) {
+                return;
+            }
+            overlay.classList.remove("hidden");
+            overlay.classList.add("flex");
+        };
+        const hideOverlay = () => {
+            if (!overlay) {
+                return;
+            }
+            overlay.classList.add("hidden");
+            overlay.classList.remove("flex");
+        };
+
+        dom.downloadPngBtn.disabled = true;
+        dom.downloadPngBtn.classList.add("opacity-75", "cursor-not-allowed");
+        if (dom.downloadPngFloatingBtn) {
+            dom.downloadPngFloatingBtn.disabled = true;
+            dom.downloadPngFloatingBtn.classList.add("opacity-75", "cursor-not-allowed");
+        }
+        showOverlay();
+
+        // Yield two animation frames so the overlay actually paints before the
+        // synchronous canvas rasterization work begins on the main thread.
+        await new Promise((resolve) =>
+            window.requestAnimationFrame(() => window.requestAnimationFrame(resolve))
+        );
+
+        try {
+            await exportDiagramAsTransparentPng({ dom, fileNameManager, toast, t });
+        } finally {
+            hideOverlay();
+            dom.downloadPngBtn.disabled = false;
+            dom.downloadPngBtn.classList.remove("opacity-75", "cursor-not-allowed");
+            if (dom.downloadPngFloatingBtn) {
+                dom.downloadPngFloatingBtn.disabled = false;
+                dom.downloadPngFloatingBtn.classList.remove("opacity-75", "cursor-not-allowed");
+            }
+        }
     });
 }
 

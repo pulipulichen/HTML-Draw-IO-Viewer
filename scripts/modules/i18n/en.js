@@ -27,6 +27,8 @@ window.I18N_TRANSLATIONS.en = {
     "export.currentFileLabel": "Current file",
     "export.downloadBtn": "Download XML",
     "export.downloadTransparentPngBtn": "Download Transparent PNG",
+    "export.exportPngBtn": "Export PNG",
+    "export.pngExportLoading": "Generating transparent PNG, please wait…",
     "export.openCurrentInDrawioBtn": "Open Current XML in Draw.io",
     "export.openDrawioLink": "Open Draw.io",
     "ai.title": "Gemini AI Assistant",

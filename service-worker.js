@@ -1,6 +1,6 @@
 /* global self, caches */
 
-const CACHE_VERSION = "v17";
+const CACHE_VERSION = "v24";
 const APP_CACHE = `drawio-ai-editor-${CACHE_VERSION}`;
 const APP_SHELL_FILES = [
     "./",
@@ -18,12 +18,14 @@ const APP_SHELL_FILES = [
     "./scripts/prompts/system_prompt_drawio.md",
     "./scripts/prompts/system_prompt_mermaid.md",
     "./scripts/services/aiService.js",
+    "./scripts/services/fontEmbedService.js",
     "./scripts/services/fileService.js",
     "./scripts/services/networkService.js",
     "./scripts/ui/toast.js",
     "./scripts/utils/debounce.js",
     "./scripts/utils/dom.js",
-    "./assets/favicon/favicon.png"
+    "./assets/favicon/favicon.png",
+    "./assets/fonts/NotoSansTC-wght.ttf"
 ];
 
 self.addEventListener("install", (event) => {
