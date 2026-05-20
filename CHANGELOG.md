@@ -57,6 +57,11 @@
 - Updated AI prompt handling to persist draft text in `localStorage`, restore it on reload, and clear it only after successful AI submission.
 - Refactored `scripts/main.js` by extracting business-specific responsibilities into dedicated feature modules (`fileNameManager`, UI state, Gemini settings, shortcuts, shared app event bindings, and AI event bindings), keeping `main.js` focused on composition and startup orchestration.
 
+### Documentation
+
+- Rewrote `README.md` to a structured, implementation-aligned English guide covering features, stack, setup, usage flow, storage behavior, and runtime notes.
+- Added `README_zh_tw.md` as the synchronized Traditional Chinese counterpart with matching section structure and bilingual cross-links.
+
 ### Improved
 
 - Enhanced UI feedback with toast notifications and loading states for user actions.

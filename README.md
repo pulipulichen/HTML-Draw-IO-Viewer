@@ -1,10 +1,64 @@
-# HTML-Draw-IO-Viewer
-A pure HTML Draw.io viewer and editor that supports viewing raw XML files and editing diagrams through Gemini AI conversations.
+# HTML Draw.io Viewer
 
-Online Demo: https://pulipulichen.github.io/HTML-Draw-IO-Viewer/
+[English](./README.md) | [繁體中文](./README_zh_tw.md)
 
-| [url](https://www.coze.com/space/7372072543077203975/bot/7372902216379875335) | project\_name | description\_short\_zh\_tw | description\_short\_en | description\_zh\_tw | description\_en\_us | techniques |
-| --- | --- | --- | --- | --- | --- | --- |
+A lightweight browser app for loading, previewing, and editing Draw.io XML diagrams.  
+It combines the Draw.io viewer with Gemini-powered prompt editing, highlighted-region context, and local version history in a pure frontend architecture.
 
-| [https://github.com/pulipulichen/HTML-Draw-IO-Viewer.git](https://github.com/pulipulichen/HTML-Draw-IO-Viewer.git) | HTML Draw IO Viewer | 這是一款全 HTML 的 Draw.io 檔案瀏覽與編輯器，支援直接讀取 XML 原始碼並結合 Gemini AI 進行對話式編輯。 | A pure HTML Draw.io viewer and editor that supports viewing raw XML files and editing diagrams through Gemini AI conversations. | 本專案是一款輕量化的全 HTML 網頁應用程式，旨在提供便捷的 Draw.io 圖表瀏覽與編輯體驗。使用者只需輸入 Draw.io 的 XML 原始檔，或是透過對話介面輸入自然語言指令，系統便會即時輸出並呈現視覺化的互動式圖表。此外，結合 Gemini AI 的強大能力，使用者可以透過直覺的對話引導系統自動更新與調整圖表內容，並能輸出修改後的 XML 檔案，大幅簡化圖表協作與修訂的流程。 | This project is a lightweight, pure HTML web application designed to provide a seamless Draw.io diagram viewing and editing experience. By inputting Draw.io XML source files or inputting natural language prompts through a chat interface, the system outputs interactive visual diagrams on the fly. Integrated with Gemini AI, it allows users to modify diagram layouts through intuitive conversations and outputs the updated XML files, streamlining the workflow of diagram collaboration and revision. | HTML5 / JavaScript: 構建輕量化且無需安裝的純前端網頁應用程式，實現即時的 XML 解析與圖表呈現。<br>Gemini API: 整合 Google 的 Gemini 大型語言模型，提供智慧化的對話式圖表編輯與自動生成功能。<br>mxGraph / Draw.io SDK: 用於精準解析與還原 Draw.io 的 XML 資料結構，並在瀏覽器中呈現高品質的互動式圖表。 |
-| --- | --- | --- | --- | --- | --- | --- |
+- Online demo: [https://pulipulichen.github.io/HTML-Draw-IO-Viewer/](https://pulipulichen.github.io/HTML-Draw-IO-Viewer/)
+
+## Features
+
+- Load diagrams from local `.drawio` / `.xml` files, XML URLs, or built-in sample XML.
+- Live XML preview with pan/zoom interaction and a minimap navigator.
+- Ask Gemini to generate or modify diagram XML from natural language prompts.
+- Add highlighted regions (rectangle, polygon, freehand) and send them to Gemini as visual context.
+- Attach reference files (`txt`, `md`, `xml`, `json`, `js`, `css`, `html`, etc.) for richer AI instructions.
+- Keep AI version history in-browser and restore any previous result.
+- Export XML by download or open current XML directly in Draw.io.
+- Built-in internationalization (English and Traditional Chinese) with language switching.
+- PWA support with service worker registration.
+
+## Tech Stack
+
+- HTML5 + Vanilla JavaScript (ES Modules)
+- Tailwind CSS (CDN)
+- Draw.io viewer script (`viewer-static.min.js`)
+- Gemini API (client-side request flow)
+- Browser APIs: `localStorage`, `Service Worker`, `File API`, `Canvas`
+
+## Getting Started
+
+1. Clone this repository:
+
+   ```bash
+   git clone https://github.com/pulipulichen/HTML-Draw-IO-Viewer.git
+   cd HTML-Draw-IO-Viewer
+   ```
+
+2. Serve the project with any static file server (recommended for service worker behavior), for example:
+
+   ```bash
+   python3 -m http.server 4173
+   ```
+
+3. Open `http://localhost:4173` in your browser.
+
+## Basic Usage
+
+1. Load diagram XML from sample, local file, or URL.
+2. Edit XML directly in the source panel and preview updates live.
+3. Open **Gemini Settings** and provide your Gemini API key/model.
+4. Enter a prompt in the AI tab (optionally attach references and highlighted snapshots).
+5. Apply AI result, review history, then export XML.
+
+## Data and Storage
+
+- The app stores data in browser `localStorage` (XML content, AI prompt/history, tab state, Gemini settings).
+- API keys are persisted locally in the same browser profile.
+- No dedicated backend is included in this repository.
+
+## Notes
+
+- URL import depends on target server CORS policy.
+- Very large XML may not fit Draw.io URL length limits; the app falls back to file download behavior.
