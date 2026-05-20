@@ -25,6 +25,7 @@ function setupMousePanZoom(viewerContainer, diagramHost, { onTransformChange } =
     const maxScale = 4;
 
     const isSelectMode = () => viewerContainer.dataset.interactionMode === "select";
+    const isNavigationLocked = () => viewerContainer.dataset.navigationLocked === "true";
     const isFromMinimap = (event) =>
         event.target instanceof Element &&
         Boolean(event.target.closest('[data-viewer-role^="minimap-"]'));
@@ -159,7 +160,7 @@ function setupMousePanZoom(viewerContainer, diagramHost, { onTransformChange } =
     };
 
     const onWheel = (event) => {
-        if (isSelectMode()) {
+        if (isSelectMode() || isNavigationLocked()) {
             return;
         }
         if (isFromMinimap(event)) {
@@ -173,7 +174,7 @@ function setupMousePanZoom(viewerContainer, diagramHost, { onTransformChange } =
     };
 
     const onPointerDown = (event) => {
-        if (isSelectMode()) {
+        if (isSelectMode() || isNavigationLocked()) {
             return;
         }
         if (isFromMinimap(event)) {
@@ -194,7 +195,7 @@ function setupMousePanZoom(viewerContainer, diagramHost, { onTransformChange } =
     };
 
     const onPointerMove = (event) => {
-        if (isSelectMode()) {
+        if (isSelectMode() || isNavigationLocked()) {
             return;
         }
         if (!isDragging || event.pointerId !== dragPointerId) {
@@ -208,7 +209,7 @@ function setupMousePanZoom(viewerContainer, diagramHost, { onTransformChange } =
     };
 
     const releaseDragState = (event) => {
-        if (isSelectMode()) {
+        if (isSelectMode() || isNavigationLocked()) {
             return;
         }
         if (!isDragging || event.pointerId !== dragPointerId) {
@@ -272,6 +273,9 @@ function setupMousePanZoom(viewerContainer, diagramHost, { onTransformChange } =
     };
 
     const panTo = (newOffsetX, newOffsetY) => {
+        if (isNavigationLocked()) {
+            return;
+        }
         offsetX = newOffsetX;
         offsetY = newOffsetY;
         hasInteracted = true;
@@ -280,12 +284,18 @@ function setupMousePanZoom(viewerContainer, diagramHost, { onTransformChange } =
 
     const getTransform = () => ({ scale, offsetX, offsetY });
     const zoomBy = (zoomMultiplier) => {
+        if (isNavigationLocked()) {
+            return;
+        }
         const rect = viewerContainer.getBoundingClientRect();
         const centerX = rect.width / 2;
         const centerY = rect.height / 2;
         zoomAt(centerX, centerY, zoomMultiplier);
     };
     const resetView = () => {
+        if (isNavigationLocked()) {
+            return;
+        }
         fitAndCenterContent();
     };
 

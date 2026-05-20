@@ -55,7 +55,8 @@ test("clicking minimap updates diagram transform", async ({ page }) => {
             return null;
         }
 
-        const target = Array.from(host.querySelectorAll("*")).find(
+        const candidates = [host, ...Array.from(host.querySelectorAll("*"))];
+        const target = candidates.find(
             (el) => el instanceof HTMLElement && el.style.transform.includes("scale(")
         );
 
@@ -78,7 +79,8 @@ test("clicking minimap updates diagram transform", async ({ page }) => {
                     return null;
                 }
 
-                const target = Array.from(host.querySelectorAll("*")).find(
+                const candidates = [host, ...Array.from(host.querySelectorAll("*"))];
+                const target = candidates.find(
                     (el) => el instanceof HTMLElement && el.style.transform.includes("scale(")
                 );
 

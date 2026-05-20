@@ -28,6 +28,7 @@ export function getDomElements() {
         openDrawioLink: getRequiredElement("openDrawioLink"),
         currentFileNameInput: getRequiredElement("currentFileNameInput"),
         formatBtn: getRequiredElement("formatBtn"),
+        clearXmlBtn: getRequiredElement("clearXmlBtn"),
         loadSampleBtn: getRequiredElement("loadSampleBtn"),
         viewerContainer: getRequiredElement("viewerContainer"),
         toast: getRequiredElement("toast"),

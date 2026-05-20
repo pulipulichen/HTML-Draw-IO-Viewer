@@ -1,15 +1,21 @@
 export function createToastController(toastElement) {
     let toastTimeoutId;
+    let hideTimeoutId;
 
     function show(message, isError = false) {
+        clearTimeout(hideTimeoutId);
         toastElement.textContent = message;
         toastElement.className =
-            `absolute top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded shadow-lg text-sm transition-opacity duration-300 z-50 ${isError ? "bg-red-600 text-white" : "bg-slate-800 text-white"}`;
+            `absolute top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded shadow-lg text-sm transition-opacity duration-300 z-50 pointer-events-none ${isError ? "bg-red-600 text-white" : "bg-slate-800 text-white"}`;
+        toastElement.style.visibility = "visible";
         toastElement.style.opacity = "1";
 
         clearTimeout(toastTimeoutId);
         toastTimeoutId = window.setTimeout(() => {
             toastElement.style.opacity = "0";
+            hideTimeoutId = window.setTimeout(() => {
+                toastElement.style.visibility = "hidden";
+            }, 320);
         }, 3000);
     }
 

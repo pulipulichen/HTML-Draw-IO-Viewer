@@ -8,6 +8,12 @@ export function createShortcutsController(options) {
         dom.aiPrompt.setSelectionRange(cursorPos, cursorPos);
     }
 
+    function focusXmlInputAndSelectAll() {
+        dom.editorTabBtn.click();
+        dom.xmlInput.focus();
+        dom.xmlInput.select();
+    }
+
     function openShortcutsModal() {
         dom.shortcutsModal.classList.remove("hidden");
         dom.shortcutsModal.classList.add("flex");
@@ -69,6 +75,11 @@ export function createShortcutsController(options) {
             }
 
             const lowerKey = event.key.toLowerCase();
+            if (lowerKey === "x") {
+                event.preventDefault();
+                focusXmlInputAndSelectAll();
+                return;
+            }
             if (lowerKey === "i") {
                 event.preventDefault();
                 dom.addHighlightBtn.click();

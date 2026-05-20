@@ -5,7 +5,8 @@ export const STORAGE_KEYS = {
     diagramXml: "drawio-viewer-diagram-xml",
     aiHistory: "drawio-viewer-ai-history",
     leftPanelTab: "drawio-viewer-left-panel-tab",
-    aiPrompt: "drawio-viewer-ai-prompt"
+    aiPrompt: "drawio-viewer-ai-prompt",
+    highlightMode: "drawio-viewer-highlight-mode"
 };
 
 export const DEFAULT_MODEL_NAME = "gemini-flash-latest";

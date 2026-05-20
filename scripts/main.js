@@ -72,7 +72,10 @@ const selectionController = createSelectionController({
     dom,
     t,
     showToast: (message, isError) => toast.show(message, Boolean(isError)),
-    onSelectionCaptured: () => uiStateController.setActiveTab("ai")
+    onSelectionCaptured: () => uiStateController.setActiveTab("ai"),
+    readStoredValue,
+    writeStoredValue,
+    highlightModeStorageKey: STORAGE_KEYS.highlightMode
 });
 
 function fillXmlAndRender(xmlText, options = {}) {
@@ -109,7 +112,7 @@ const aiHistoryController = createAiHistoryController({
     onRestore: (entry) => {
         fillXmlAndRender(entry.resultXml);
         fileNameManager.markAiEdited(entry.timestamp);
-        uiStateController.setActiveTab("editor");
+        uiStateController.setActiveTab("versions");
     }
 });
 

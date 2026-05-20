@@ -45,6 +45,12 @@ export function registerInputEvents(options) {
         toast.show(t("toast.rerendered"));
     });
 
+    dom.clearXmlBtn.addEventListener("click", () => {
+        dom.xmlInput.value = "";
+        writeStoredValue(storageKeys.diagramXml, "");
+        render("");
+    });
+
     dom.loadSampleBtn.addEventListener("click", () => {
         if (dom.loadingState) {
             dom.loadingState.style.display = "flex";

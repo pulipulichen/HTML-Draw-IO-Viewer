@@ -29,6 +29,13 @@
 - Added a keyboard shortcuts help modal, including a top-right launcher button and `?` quick-open shortcut.
 - Added global keyboard shortcuts for preview control and highlighting (`+`, `-`, `/`, `I`, `D`, `E`) plus `Ctrl/Cmd + S` to download XML directly.
 - Added a full-screen AI loading overlay while Gemini generation is in progress to provide clear global busy feedback.
+- Added per-version `Copy` and `Download` actions in the Versions panel, including persisted per-entry export file names.
+- Added version thumbnails in history cards with a left-side square preview layout and keyboard-selected version highlighting.
+- Added keyboard workflows for version navigation: `V` to switch to Versions, then `PageUp/PageDown` to restore adjacent versions.
+- Added extra productivity shortcuts: `Tab` to focus the AI prompt and `M` to toggle the minimap.
+- Added persistence for highlight mode selection (`rect` / `polygon` / `freehand`) in `localStorage`.
+- Added an `X` keyboard shortcut to jump to the `Source` tab and auto-select all XML for faster replacement/edit workflows.
+- Added a dedicated `Clear` button beside `Rerender` in the XML editor header to reset source content in one click.
 
 ### Changed
 
@@ -56,6 +63,12 @@
 - Updated left-panel scrolling behavior so tab buttons remain visible while the `Versions` tab content scrolls independently.
 - Updated AI prompt handling to persist draft text in `localStorage`, restore it on reload, and clear it only after successful AI submission.
 - Refactored `scripts/main.js` by extracting business-specific responsibilities into dedicated feature modules (`fileNameManager`, UI state, Gemini settings, shortcuts, shared app event bindings, and AI event bindings), keeping `main.js` focused on composition and startup orchestration.
+- Updated AI panel layout ordering to show `Highlighted Snapshot` above `Reference Files` for faster visual confirmation after selection.
+- Updated button labels to expose keyboard hints directly in the main UI (for example `(I)`, `(D)`, `(E)`, `(Ctrl+S)`, and `(?)`).
+- Updated toast visibility behavior so hidden toasts do not block interactions with underlying preview controls.
+- Updated preview interaction rules so pan/zoom and minimap navigation are locked while highlights exist, preventing selection drift after capture.
+- Refactored history thumbnail capture logic from `main.js` into `scripts/features/historyThumbnailCapture.js` to keep bootstrap logic leaner.
+- Updated left-tab labels to expose direct keyboard hints (`Source (X)`, `AI Editor (Tab)`, and `Versions (V)`).
 
 ### Documentation
 
@@ -81,3 +94,9 @@
 - Fixed stale frontend assets after updates by switching same-origin service-worker fetch handling to network-first with cache fallback and a controller-change reload path.
 - Fixed Gemini multimodal request failures for highlighted-region snapshots by converting SVG-based captures to PNG before upload (`image/svg+xml` is not accepted).
 - Fixed minimap intermittently rendering blank by observing in-place SVG mutations and refreshing the minimap clone when diagram content updates.
+- Fixed history entry downloads to use the file name captured at the time each version was created, instead of only the current working name.
+- Fixed version-card action discoverability by switching restore/copy/download controls from link-like text to explicit button styling.
+- Fixed highlighted snapshot export regressions through multiple capture-path adjustments (viewer/container raster capture precedence, minimap exclusion, and SVG-coordinate remapping) to improve full-diagram coverage and highlight alignment.
+- Fixed version restore behavior to keep the `Versions` tab active after applying a historical snapshot.
+- Fixed the minimap E2E transform assertion to also detect transforms applied directly on the diagram host element, preventing false failures when no transformed child node exists.
+- Fixed the keyboard-highlight E2E reset assertion to verify the selection-mode class (`ring-emerald-400`) instead of the static focus utility class (`focus:ring-2`), eliminating false negatives after pressing `E`.

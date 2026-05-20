@@ -279,6 +279,7 @@ export function createMinimap(viewerContainer, translate = (k, fb = k) => fb) {
 
     // ── Navigation on minimap click/drag ─────────────────────────────────────
     function navigateTo(mx, my) {
+        if (viewerContainer.dataset.navigationLocked === "true") return;
         if (!panToFn || !minimapW || !svgNatW || !svgEl) return;
 
         const vcBCR = viewerContainer.getBoundingClientRect();

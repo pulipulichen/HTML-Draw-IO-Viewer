@@ -39,16 +39,19 @@
 
             <div class="left-tabs flex flex-col gap-4 flex-1 min-h-0">
                 <div class="grid grid-cols-3 p-1 bg-slate-100 rounded-lg">
-                    <button id="editorTabBtn" type="button" data-tab-target="editor" class="left-tab-btn active px-3 py-2 text-sm rounded-md font-semibold transition-colors" data-i18n="tabs.editor">Source</button>
-                    <button id="aiTabBtn" type="button" data-tab-target="ai" class="left-tab-btn px-3 py-2 text-sm rounded-md font-semibold transition-colors" data-i18n="tabs.aiEditor">AI Editor</button>
-                    <button id="versionsTabBtn" type="button" data-tab-target="versions" class="left-tab-btn px-3 py-2 text-sm rounded-md font-semibold transition-colors" data-i18n="tabs.versions">Versions</button>
+                    <button id="editorTabBtn" type="button" data-tab-target="editor" class="left-tab-btn active px-3 py-2 text-sm rounded-md font-semibold transition-colors" data-i18n="tabs.editor">Source (X)</button>
+                    <button id="aiTabBtn" type="button" data-tab-target="ai" class="left-tab-btn px-3 py-2 text-sm rounded-md font-semibold transition-colors" data-i18n="tabs.aiEditor">AI Editor (Tab)</button>
+                    <button id="versionsTabBtn" type="button" data-tab-target="versions" class="left-tab-btn px-3 py-2 text-sm rounded-md font-semibold transition-colors" data-i18n="tabs.versions">Versions (V)</button>
                 </div>
 
                 <div id="editorTabPanel" data-tab-panel="editor" class="space-y-4 h-full overflow-y-auto pr-1">
                     <div class="flex flex-col min-h-[320px]">
-                        <div class="flex justify-between items-center mb-1">
+                        <div class="flex justify-between items-center mb-1 gap-2">
                             <label class="block text-sm font-medium text-slate-600" data-i18n="editor.xmlLabel">XML Source (Live Preview)</label>
-                            <button id="formatBtn" class="text-xs text-blue-600 hover:text-blue-800 font-medium" data-i18n="editor.rerenderBtn">Rerender</button>
+                            <div class="flex items-center gap-2">
+                                <button id="clearXmlBtn" class="text-xs text-slate-600 hover:text-slate-800 font-medium" data-i18n="editor.clearBtn">Clear</button>
+                                <button id="formatBtn" class="text-xs text-blue-600 hover:text-blue-800 font-medium" data-i18n="editor.rerenderBtn">Rerender</button>
+                            </div>
                         </div>
                         <textarea id="xmlInput" class="w-full min-h-[260px] p-3 border border-slate-300 rounded-md font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y shadow-inner bg-slate-50" data-i18n-placeholder="editor.xmlPlaceholder" placeholder="Paste your Draw.io XML here..."></textarea>
                     </div>
@@ -130,6 +133,18 @@
                             <textarea id="aiPrompt" rows="3" data-i18n-placeholder="ai.promptPlaceholder" placeholder="Example: Add a red 'End' node at the end, or generate a login flowchart..." class="w-full p-2 border border-indigo-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none bg-white"></textarea>
                         </div>
 
+                        <div class="mt-3 border border-indigo-200 rounded-md bg-white p-3">
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-xs font-medium text-indigo-700" data-i18n="ai.selectedRegionLabel">Highlighted Snapshot</label>
+                                <button id="clearSelectedRegionBtn" type="button" class="text-xs text-indigo-700 hover:text-indigo-900 font-medium" data-i18n="ai.clearSelectedRegionBtn">Clear</button>
+                            </div>
+                            <p id="selectedRegionEmpty" class="text-xs text-indigo-700/70" data-i18n="ai.selectedRegionEmpty">No highlighted image yet.</p>
+                            <div id="selectedRegionPreviewWrap" class="hidden">
+                                <img id="selectedRegionPreview" alt="Selected region preview" class="w-full max-h-36 object-contain border border-indigo-100 rounded bg-slate-50">
+                                <p id="selectedRegionMeta" class="text-[11px] text-indigo-700 mt-1"></p>
+                            </div>
+                        </div>
+
                         <div class="mt-3">
                             <div class="flex items-center justify-between mb-2">
                                 <label class="block text-xs font-medium text-indigo-700" data-i18n="ai.referenceLabel">Reference Files</label>
@@ -141,18 +156,6 @@
                                 <input type="file" id="referenceFileInput" multiple class="hidden">
                             </div>
                             <ul id="referenceFilesList" class="mt-2 text-xs space-y-1"></ul>
-                        </div>
-
-                        <div class="mt-3 border border-indigo-200 rounded-md bg-white p-3">
-                            <div class="flex items-center justify-between mb-2">
-                                <label class="block text-xs font-medium text-indigo-700" data-i18n="ai.selectedRegionLabel">Highlighted Snapshot</label>
-                                <button id="clearSelectedRegionBtn" type="button" class="text-xs text-indigo-700 hover:text-indigo-900 font-medium" data-i18n="ai.clearSelectedRegionBtn">Clear</button>
-                            </div>
-                            <p id="selectedRegionEmpty" class="text-xs text-indigo-700/70" data-i18n="ai.selectedRegionEmpty">No highlighted image yet.</p>
-                            <div id="selectedRegionPreviewWrap" class="hidden">
-                                <img id="selectedRegionPreview" alt="Selected region preview" class="w-full max-h-36 object-contain border border-indigo-100 rounded bg-slate-50">
-                                <p id="selectedRegionMeta" class="text-[11px] text-indigo-700 mt-1"></p>
-                            </div>
                         </div>
 
                         <div class="sticky bottom-0 pt-3 pb-1 bg-indigo-50/95 backdrop-blur-sm">

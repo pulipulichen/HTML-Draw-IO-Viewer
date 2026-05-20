@@ -76,14 +76,14 @@ test("switches highlight action with i and d, then clears with e", async ({ page
 
     await page.keyboard.press("i");
     await expect(addHighlightBtn).toHaveClass(/bg-blue-600/);
-    await expect(highlightModeSelect).toHaveClass(/ring-2/);
+    await expect(highlightModeSelect).toHaveClass(/ring-emerald-400/);
 
     await page.keyboard.press("d");
     await expect(eraseHighlightBtn).toHaveClass(/bg-rose-600/);
     await expect(addHighlightBtn).not.toHaveClass(/bg-blue-600/);
 
     await page.keyboard.press("e");
-    await expect(highlightModeSelect).not.toHaveClass(/ring-2/);
+    await expect(highlightModeSelect).not.toHaveClass(/ring-emerald-400/);
     await expect(eraseHighlightBtn).not.toHaveClass(/bg-rose-600/);
 
     expect(consoleErrors).toHaveLength(0);

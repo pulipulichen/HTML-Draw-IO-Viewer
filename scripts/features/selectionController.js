@@ -186,6 +186,9 @@ export function createSelectionController({
     t,
     showToast,
     onSelectionCaptured,
+    readStoredValue = () => "",
+    writeStoredValue = () => {},
+    highlightModeStorageKey = "",
     minSelectionSize = 12
 }) {
     let isSelectionMode = false;
@@ -200,6 +203,18 @@ export function createSelectionController({
     let polygonDraftPoints = [];
     let highlights = [];
     let highlightIdSeed = 1;
+    const supportedHighlightModes = new Set(["rect", "polygon", "freehand"]);
+
+    function resolveHighlightMode(inputValue) {
+        if (typeof inputValue === "string" && supportedHighlightModes.has(inputValue)) {
+            return inputValue;
+        }
+        return "rect";
+    }
+
+    function syncNavigationLock() {
+        dom.viewerContainer.dataset.navigationLocked = highlights.length ? "true" : "false";
+    }
 
     function getOrCreateSelectionBox() {
         let selectionBox = dom.viewerContainer.querySelector("#selectionBox");
@@ -401,7 +416,35 @@ export function createSelectionController({
             throw new Error("svg size invalid");
         }
 
-        const fullSvg = serializeSvgForExport(svgElement, svgRect.width, svgRect.height);
+        const vb = svgElement.viewBox?.baseVal;
+        const viewBox = {
+            x: vb && Number.isFinite(vb.x) ? vb.x : 0,
+            y: vb && Number.isFinite(vb.y) ? vb.y : 0,
+            width:
+                (vb && Number.isFinite(vb.width) && vb.width > 0 ? vb.width : 0) ||
+                Math.max(1, Math.round(svgRect.width)),
+            height:
+                (vb && Number.isFinite(vb.height) && vb.height > 0 ? vb.height : 0) ||
+                Math.max(1, Math.round(svgRect.height))
+        };
+        const exportWidth = Math.max(1, Math.round(viewBox.width));
+        const exportHeight = Math.max(1, Math.round(viewBox.height));
+
+        const fullClone = svgElement.cloneNode(true);
+        if (!(fullClone instanceof SVGElement)) {
+            throw new Error("svg clone failed");
+        }
+        if (!fullClone.getAttribute("xmlns")) {
+            fullClone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+        }
+        if (!fullClone.getAttribute("xmlns:xlink")) {
+            fullClone.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+        }
+        fullClone.setAttribute("width", String(exportWidth));
+        fullClone.setAttribute("height", String(exportHeight));
+        fullClone.setAttribute("viewBox", `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
+        const fullSvg = new XMLSerializer().serializeToString(fullClone);
+
         const highlightedClone = svgElement.cloneNode(true);
         if (!(highlightedClone instanceof SVGElement)) {
             throw new Error("svg clone failed");
@@ -412,19 +455,46 @@ export function createSelectionController({
         if (!highlightedClone.getAttribute("xmlns:xlink")) {
             highlightedClone.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
         }
-        highlightedClone.setAttribute("width", String(Math.max(1, Math.round(svgRect.width))));
-        highlightedClone.setAttribute("height", String(Math.max(1, Math.round(svgRect.height))));
-        if (!highlightedClone.getAttribute("viewBox")) {
-            highlightedClone.setAttribute("viewBox", `0 0 ${Math.max(1, svgRect.width)} ${Math.max(1, svgRect.height)}`);
-        }
+        highlightedClone.setAttribute("width", String(exportWidth));
+        highlightedClone.setAttribute("height", String(exportHeight));
+        highlightedClone.setAttribute("viewBox", `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
 
         const highlightLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
         highlightLayer.setAttribute("data-role", "highlight-overlay");
+        const screenMatrix = typeof svgElement.getScreenCTM === "function" ? svgElement.getScreenCTM() : null;
+        const inverseMatrix =
+            screenMatrix && typeof screenMatrix.inverse === "function" ? screenMatrix.inverse() : null;
+
         highlights.forEach((polygon) => {
             const localPoints = polygon.points.map((point) => ({
-                x: point.x - (svgRect.left - containerRect.left),
-                y: point.y - (svgRect.top - containerRect.top)
+                x: 0,
+                y: 0
             }));
+
+            for (let i = 0; i < polygon.points.length; i += 1) {
+                const point = polygon.points[i];
+                const screenX = containerRect.left + point.x;
+                const screenY = containerRect.top + point.y;
+
+                if (inverseMatrix && typeof svgElement.createSVGPoint === "function") {
+                    const svgPoint = svgElement.createSVGPoint();
+                    svgPoint.x = screenX;
+                    svgPoint.y = screenY;
+                    const mappedPoint = svgPoint.matrixTransform(inverseMatrix);
+                    localPoints[i] = {
+                        x: Number.isFinite(mappedPoint.x) ? mappedPoint.x : viewBox.x,
+                        y: Number.isFinite(mappedPoint.y) ? mappedPoint.y : viewBox.y
+                    };
+                    continue;
+                }
+
+                // Fallback: ratio mapping based on rendered svg bounds.
+                localPoints[i] = {
+                    x: viewBox.x + ((point.x - (svgRect.left - containerRect.left)) / Math.max(1, svgRect.width)) * viewBox.width,
+                    y: viewBox.y + ((point.y - (svgRect.top - containerRect.top)) / Math.max(1, svgRect.height)) * viewBox.height
+                };
+            }
+
             const pathValue = buildPolygonPath(localPoints);
             if (!pathValue) {
                 return;
@@ -443,14 +513,14 @@ export function createSelectionController({
             fullImage: {
                 mimeType: "image/svg+xml",
                 dataUrl: toDataUrlFromSvg(fullSvg),
-                width: Math.max(1, Math.round(svgRect.width)),
-                height: Math.max(1, Math.round(svgRect.height))
+                width: exportWidth,
+                height: exportHeight
             },
             highlightedImage: {
                 mimeType: "image/svg+xml",
                 dataUrl: toDataUrlFromSvg(highlightedSvg),
-                width: Math.max(1, Math.round(svgRect.width)),
-                height: Math.max(1, Math.round(svgRect.height))
+                width: exportWidth,
+                height: exportHeight
             }
         };
     }
@@ -698,19 +768,73 @@ export function createSelectionController({
         ctx.fillRect(0, 0, fullCanvas.width, fullCanvas.height);
         const drawX = Math.round((layerRect.left - containerRect.left) * ratio);
         const drawY = Math.round((layerRect.top - containerRect.top) * ratio);
-        ctx.drawImage(layerCanvas, drawX, drawY);
+        const drawWidth = Math.max(1, Math.round(layerRect.width * ratio));
+        const drawHeight = Math.max(1, Math.round(layerRect.height * ratio));
+        ctx.drawImage(layerCanvas, drawX, drawY, drawWidth, drawHeight);
         return fullCanvas;
+    }
+
+    async function captureViewerContainerWithHtml2Canvas() {
+        const html2canvasModule = await loadHtml2CanvasModule();
+        const html2canvas = html2canvasModule.default;
+        const selectionBox = getOrCreateSelectionBox();
+        const overlayCanvas = getOrCreateHighlightCanvas();
+        const hiddenNodes = [];
+
+        [selectionBox, overlayCanvas].forEach((node) => {
+            if (!node.classList.contains("hidden")) {
+                node.classList.add("hidden");
+                hiddenNodes.push(node);
+            }
+        });
+
+        try {
+            const canvas = await html2canvas(dom.viewerContainer, {
+                backgroundColor: null,
+                useCORS: true,
+                logging: false,
+                scale: window.devicePixelRatio || 1,
+                ignoreElements: (element) =>
+                    element.id === "selectionBox" ||
+                    element.id === "highlightCanvas" ||
+                    element.id === "toast" ||
+                    element.id === "loadingState" ||
+                    Boolean(element.getAttribute("data-viewer-role")?.startsWith("minimap-")) ||
+                    Boolean(element.getAttribute("data-viewer-role")?.startsWith("minimap"))
+            });
+            return canvas;
+        } finally {
+            hiddenNodes.forEach((node) => node.classList.remove("hidden"));
+        }
     }
 
     async function captureViewerWithoutOverlay() {
         try {
-            const canvas = await captureViewerFromSvg();
+            const canvas = await captureViewerContainerWithHtml2Canvas();
+            return canvas;
+        } catch (viewerCaptureError) {
+            console.warn("viewer html2canvas 失敗，改用 diagram-layer html2canvas:", viewerCaptureError);
+        }
+
+        try {
+            const canvas = await captureDiagramLayerWithHtml2Canvas();
             if (!hasMeaningfulPixels(canvas)) {
-                throw new Error("svg snapshot blank");
+                throw new Error("diagram layer html2canvas blank");
             }
             return canvas;
-        } catch (svgError) {
-            console.warn("SVG 全圖擷取失敗，嘗試 SVG-only fallback:", svgError);
+        } catch (diagramLayerError) {
+            console.warn("diagram-layer html2canvas 失敗，改用 SVG fallback:", diagramLayerError);
+
+            try {
+                const canvas = await captureViewerFromSvg();
+                if (!hasMeaningfulPixels(canvas)) {
+                    throw new Error("svg snapshot blank");
+                }
+                return canvas;
+            } catch (svgError) {
+                console.warn("SVG 全圖擷取失敗，嘗試 SVG dataURL fallback:", svgError);
+            }
+
             try {
                 const canvas = await captureViewerFromSvgDataUrl();
                 if (!hasMeaningfulPixels(canvas)) {
@@ -718,44 +842,11 @@ export function createSelectionController({
                 }
                 return canvas;
             } catch (svgDataUrlError) {
-                console.warn("SVG dataURL 擷取失敗，改用 html2canvas (diagram-layer):", svgDataUrlError);
+                console.warn("SVG dataURL 擷取失敗，改用 composed svg fallback:", svgDataUrlError);
             }
 
-            try {
-                const canvas = await captureDiagramLayerWithHtml2Canvas();
-                if (!hasMeaningfulPixels(canvas)) {
-                    throw new Error("diagram layer html2canvas blank");
-                }
-                return canvas;
-            } catch (diagramLayerError) {
-                console.warn("diagram-layer html2canvas 失敗，改用 viewer html2canvas:", diagramLayerError);
-            }
-
-            const html2canvasModule = await loadHtml2CanvasModule();
-            const html2canvas = html2canvasModule.default;
-            const selectionBox = getOrCreateSelectionBox();
-            const overlayCanvas = getOrCreateHighlightCanvas();
-            const hiddenNodes = [];
-
-            [selectionBox, overlayCanvas].forEach((node) => {
-                if (!node.classList.contains("hidden")) {
-                    node.classList.add("hidden");
-                    hiddenNodes.push(node);
-                }
-            });
-
-            try {
-                return await html2canvas(dom.viewerContainer, {
-                    backgroundColor: null,
-                    useCORS: true,
-                    logging: false,
-                    scale: window.devicePixelRatio || 1,
-                    ignoreElements: (element) =>
-                        element.id === "selectionBox" || element.id === "highlightCanvas" || element.id === "toast" || element.id === "loadingState"
-                });
-            } finally {
-                hiddenNodes.forEach((node) => node.classList.remove("hidden"));
-            }
+            const composed = await captureViewerFromComposedSvg();
+            return composed.fullCanvas;
         }
     }
 
@@ -789,32 +880,46 @@ export function createSelectionController({
         }
 
         try {
-            const composed = await captureViewerFromComposedSvg();
-            const highlightedDataUrl = safeCanvasToDataUrl(composed.highlightedCanvas);
-            const fullDataUrl = safeCanvasToDataUrl(composed.fullCanvas);
-            if (highlightedDataUrl && fullDataUrl) {
+            const svgSnapshot = buildSvgSnapshotContext();
+            const [fullCanvas, highlightedCanvas] = await Promise.all([
+                drawSvgDataUrlToCanvas(
+                    svgSnapshot.fullImage.dataUrl,
+                    svgSnapshot.fullImage.width,
+                    svgSnapshot.fullImage.height,
+                    1
+                ),
+                drawSvgDataUrlToCanvas(
+                    svgSnapshot.highlightedImage.dataUrl,
+                    svgSnapshot.highlightedImage.width,
+                    svgSnapshot.highlightedImage.height,
+                    1
+                )
+            ]);
+            const fullDataUrl = safeCanvasToDataUrl(fullCanvas);
+            const highlightedDataUrl = safeCanvasToDataUrl(highlightedCanvas);
+            if (fullDataUrl && highlightedDataUrl) {
                 return {
                     mimeType: "image/png",
                     dataUrl: highlightedDataUrl,
-                    width: composed.highlightedCanvas.width,
-                    height: composed.highlightedCanvas.height,
+                    width: highlightedCanvas.width,
+                    height: highlightedCanvas.height,
                     highlightCount: highlights.length,
                     fullImage: {
                         mimeType: "image/png",
                         dataUrl: fullDataUrl,
-                        width: composed.fullCanvas.width,
-                        height: composed.fullCanvas.height
+                        width: fullCanvas.width,
+                        height: fullCanvas.height
                     },
                     highlightedImage: {
                         mimeType: "image/png",
                         dataUrl: highlightedDataUrl,
-                        width: composed.highlightedCanvas.width,
-                        height: composed.highlightedCanvas.height
+                        width: highlightedCanvas.width,
+                        height: highlightedCanvas.height
                     }
                 };
             }
-        } catch (composeError) {
-            console.warn("組合式 SVG 快照失敗，改用 raster fallback:", composeError);
+        } catch (svgSnapshotError) {
+            console.warn("SVG 快照失敗，改用 raster fallback:", svgSnapshotError);
         }
 
         let fullCanvas = null;
@@ -879,6 +984,7 @@ export function createSelectionController({
 
     function clearSelectedRegion() {
         highlights = [];
+        syncNavigationLock();
         selectedRegionImage = null;
         clearSelectionBox();
         draftPolygon = null;
@@ -908,11 +1014,13 @@ export function createSelectionController({
                 id: highlightIdSeed++,
                 points: polygon
             });
+            syncNavigationLock();
             return;
         }
 
         const targetBounds = getPolygonBounds(polygon);
         highlights = highlights.filter((item) => !areBoundsIntersected(getPolygonBounds(item.points), targetBounds));
+        syncNavigationLock();
     }
 
     async function finalizePolygonAction(polygon) {
@@ -935,7 +1043,11 @@ export function createSelectionController({
 
     function registerEvents() {
         dom.highlightModeSelect.addEventListener("change", () => {
-            highlightMode = dom.highlightModeSelect.value;
+            highlightMode = resolveHighlightMode(dom.highlightModeSelect.value);
+            dom.highlightModeSelect.value = highlightMode;
+            if (highlightModeStorageKey) {
+                writeStoredValue(highlightModeStorageKey, highlightMode);
+            }
             draftPolygon = null;
             polygonDraftPoints = [];
             clearSelectionBox();
@@ -1146,7 +1258,11 @@ export function createSelectionController({
     }
 
     function initialize() {
+        highlightMode = resolveHighlightMode(
+            highlightModeStorageKey ? readStoredValue(highlightModeStorageKey) : highlightMode
+        );
         dom.highlightModeSelect.value = highlightMode;
+        syncNavigationLock();
         renderHighlightOverlay();
         renderSelectedRegionPreview();
         setSelectionMode(false);
