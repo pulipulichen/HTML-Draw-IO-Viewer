@@ -296,15 +296,19 @@ async function exportDiagramAsTransparentPng({ dom, fileNameManager, toast, t })
         let pngBlob = null;
         if (rendered) {
             // Keep canvas alpha channel untouched to export transparent background PNG.
-            pngBlob = await new Promise((resolve, reject) =>
-                canvas.toBlob((blob) => {
-                    if (blob) {
-                        resolve(blob);
-                        return;
-                    }
-                    reject(new Error("png encoding failed"));
-                }, "image/png")
-            );
+            try {
+                pngBlob = await new Promise((resolve, reject) =>
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            resolve(blob);
+                            return;
+                        }
+                        reject(new Error("png encoding failed"));
+                    }, "image/png")
+                );
+            } catch (_canvasExportError) {
+                pngBlob = null;
+            }
         }
 
         if (!pngBlob) {
