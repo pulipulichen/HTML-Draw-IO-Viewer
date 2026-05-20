@@ -20,7 +20,6 @@ export function createSourceFormatController({
             ? t("ai.currentModeMermaid", "Mermaid")
             : t("ai.currentModeDrawio", "Draw.io XML");
         applyModeBadge(dom.currentSourceModeBadge, modeLabel, isMermaid);
-        applyModeBadge(dom.versionsCurrentSourceModeBadge, modeLabel, isMermaid);
     }
 
     function updateMermaidConvertButtonVisibility() {

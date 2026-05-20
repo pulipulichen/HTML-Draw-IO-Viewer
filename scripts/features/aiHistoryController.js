@@ -103,14 +103,17 @@ export function createAiHistoryController({
             const li = document.createElement("li");
             li.className = "border border-slate-200 rounded-md p-2 bg-slate-50";
             if (index === activeVersionIndex) {
-                li.classList.add("ring-2", "ring-blue-300", "bg-blue-50");
+                li.classList.add("ring-2", "ring-inset", "ring-blue-300", "bg-blue-50");
             }
 
             const layoutRow = document.createElement("div");
             layoutRow.className = "flex items-start gap-3";
 
+            const thumbnailWrap = document.createElement("div");
+            thumbnailWrap.className = "w-24 shrink-0 flex flex-col gap-1.5";
+
             const thumbnailBox = document.createElement("div");
-            thumbnailBox.className = "w-24 h-24 shrink-0 rounded border border-slate-200 bg-white overflow-hidden";
+            thumbnailBox.className = "w-full h-24 rounded border border-slate-200 bg-white overflow-hidden";
 
             if (entry.thumbnailDataUrl) {
                 const thumbImage = document.createElement("img");
@@ -125,25 +128,48 @@ export function createAiHistoryController({
                 thumbnailBox.appendChild(thumbEmpty);
             }
 
+            const isMermaid = entry.sourceFormat === "mermaid";
+            const modeBadge = document.createElement("span");
+            modeBadge.className = isMermaid
+                ? "inline-flex items-center justify-center rounded-full border px-2 py-0.5 text-[10px] font-semibold text-emerald-700 border-emerald-200 bg-emerald-50 w-full"
+                : "inline-flex items-center justify-center rounded-full border px-2 py-0.5 text-[10px] font-semibold text-indigo-700 border-indigo-200 bg-indigo-50 w-full";
+            modeBadge.textContent = isMermaid ? "Mermaid" : "DrawIO";
+
+            const copyButton = document.createElement("button");
+            copyButton.type = "button";
+            copyButton.dataset.historyAction = "copy";
+            copyButton.dataset.historyIndex = String(index);
+            copyButton.className =
+                "w-full px-2 py-1 text-[10px] font-semibold rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-100";
+            copyButton.textContent = t("history.copyBtn");
+
+            const downloadButton = document.createElement("button");
+            downloadButton.type = "button";
+            downloadButton.dataset.historyAction = "download";
+            downloadButton.dataset.historyIndex = String(index);
+            downloadButton.className =
+                "w-full px-2 py-1 text-[10px] font-semibold rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-100";
+            downloadButton.textContent = t("history.downloadBtn");
+
+            const sideActions = document.createElement("div");
+            sideActions.className = "flex flex-col gap-1";
+            sideActions.appendChild(modeBadge);
+            sideActions.appendChild(copyButton);
+            sideActions.appendChild(downloadButton);
+
+            thumbnailWrap.appendChild(thumbnailBox);
+            thumbnailWrap.appendChild(sideActions);
+
             const contentWrap = document.createElement("div");
             contentWrap.className = "min-w-0 flex-1";
 
             const topRow = document.createElement("div");
-            topRow.className = "flex items-center justify-between gap-2";
+            topRow.className = "flex items-center gap-2";
 
             const meta = document.createElement("span");
             meta.className = "history-meta text-[11px] font-medium whitespace-nowrap";
             meta.textContent = `${t("history.itemLabel")} #${entries.length - index} · ${formatTimestamp(entry.timestamp)}`;
             meta.title = meta.textContent;
-
-            const isMermaid = entry.sourceFormat === "mermaid";
-            const modeBadge = document.createElement("span");
-            modeBadge.className = isMermaid
-                ? "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold text-emerald-700 border-emerald-200 bg-emerald-50 shrink-0"
-                : "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold text-indigo-700 border-indigo-200 bg-indigo-50 shrink-0";
-            modeBadge.textContent = `${t("ai.currentModeLabel")}: ${
-                isMermaid ? t("ai.currentModeMermaid", "Mermaid") : t("ai.currentModeDrawio", "Draw.io XML")
-            }`;
 
             const restoreButton = document.createElement("button");
             restoreButton.type = "button";
@@ -153,35 +179,11 @@ export function createAiHistoryController({
                 "px-2 py-1 text-[11px] font-semibold rounded border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300";
             restoreButton.textContent = t("history.restoreBtn");
 
-            const actions = document.createElement("div");
-            actions.className = "flex items-center gap-1.5 shrink-0";
-
-            const copyButton = document.createElement("button");
-            copyButton.type = "button";
-            copyButton.dataset.historyAction = "copy";
-            copyButton.dataset.historyIndex = String(index);
-            copyButton.className =
-                "px-2 py-1 text-[11px] font-semibold rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-100";
-            copyButton.textContent = t("history.copyBtn");
-
-            const downloadButton = document.createElement("button");
-            downloadButton.type = "button";
-            downloadButton.dataset.historyAction = "download";
-            downloadButton.dataset.historyIndex = String(index);
-            downloadButton.className =
-                "px-2 py-1 text-[11px] font-semibold rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-100";
-            downloadButton.textContent = t("history.downloadBtn");
-
-            actions.appendChild(restoreButton);
-            actions.appendChild(copyButton);
-            actions.appendChild(downloadButton);
+            const restoreRow = document.createElement("div");
+            restoreRow.className = "mt-1";
+            restoreRow.appendChild(restoreButton);
 
             topRow.appendChild(meta);
-            topRow.appendChild(modeBadge);
-
-            const actionRow = document.createElement("div");
-            actionRow.className = "mt-1 flex items-center gap-1.5";
-            actionRow.appendChild(actions);
 
             const promptLabel = document.createElement("div");
             promptLabel.className = "mt-1 text-[11px] font-semibold text-slate-600";
@@ -200,12 +202,12 @@ export function createAiHistoryController({
             resultText.textContent = entry.resultXml;
 
             contentWrap.appendChild(topRow);
-            contentWrap.appendChild(actionRow);
+            contentWrap.appendChild(restoreRow);
             contentWrap.appendChild(promptLabel);
             contentWrap.appendChild(promptText);
             contentWrap.appendChild(resultLabel);
             contentWrap.appendChild(resultText);
-            layoutRow.appendChild(thumbnailBox);
+            layoutRow.appendChild(thumbnailWrap);
             layoutRow.appendChild(contentWrap);
             li.appendChild(layoutRow);
             dom.aiHistoryList.appendChild(li);

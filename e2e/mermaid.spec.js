@@ -14,6 +14,8 @@ function trackConsoleErrors(page) {
 test("renders Mermaid source and shows conversion button", async ({ page }) => {
     const consoleErrors = trackConsoleErrors(page);
     await page.goto("/");
+    await expect(page.locator("#viewerContainer [data-viewer-role='diagram-host']")).toHaveCount(1);
+    await expect(page.locator("#xmlInput")).not.toHaveValue("");
 
     await page.selectOption("#sourceFormatSelect", "mermaid");
     await page.fill(
@@ -40,6 +42,8 @@ test("renders Mermaid source and shows conversion button", async ({ page }) => {
 test("loads .mmd file and keeps mermaid format behavior", async ({ page }) => {
     const consoleErrors = trackConsoleErrors(page);
     await page.goto("/");
+    await expect(page.locator("#viewerContainer [data-viewer-role='diagram-host']")).toHaveCount(1);
+    await expect(page.locator("#xmlInput")).not.toHaveValue("");
 
     const samplePath = path.join(process.cwd(), "demo", "example.mmd");
     await page.setInputFiles("#fileInput", samplePath);

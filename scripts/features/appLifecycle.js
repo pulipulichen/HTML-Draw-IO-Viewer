@@ -168,6 +168,9 @@ export async function initializeApp(options) {
     }
 
     setSourceFormatHint(readStoredValue(storageKeys.sourceFormat) || "auto", { persist: false });
+    // Register interaction handlers early so tests/users can interact
+    // immediately after page load, even while initial sample fetch is in flight.
+    registerEvents();
 
     const storedXml = readStoredValue(storageKeys.diagramXml).trim();
     if (storedXml) {
@@ -175,18 +178,22 @@ export async function initializeApp(options) {
     } else {
         try {
             const sample = await loadExampleXml("drawio");
-            fillXmlAndRender(sample.content, { sourceFormatHint: sample.sourceFormatHint });
-            fileNameManager.setSourceFileName(sample.fileName);
+            // Avoid clobbering user/test input when they interact before
+            // the async sample fetch resolves.
+            if (!dom.xmlInput.value.trim()) {
+                fillXmlAndRender(sample.content, { sourceFormatHint: sample.sourceFormatHint });
+                fileNameManager.setSourceFileName(sample.fileName);
+            }
         } catch (_error) {
-            toast.show(t("toast.sampleLoadFailed"), true);
-            render("");
+            if (!dom.xmlInput.value.trim()) {
+                toast.show(t("toast.sampleLoadFailed"), true);
+                render("");
+            }
         }
     }
 
     if (dom.loadingState) {
         dom.loadingState.style.display = "none";
     }
-
-    registerEvents();
     onLanguageChange(refreshI18nDrivenUi);
 }

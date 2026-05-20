@@ -91,6 +91,7 @@
                             </div>
                             <div class="mt-2 flex flex-wrap gap-2">
                                 <button id="downloadXmlBtn" type="button" class="text-xs bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded transition-colors font-medium" data-i18n="export.downloadBtn">Download XML</button>
+                                <button id="downloadPngBtn" type="button" class="text-xs bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded transition-colors font-medium" data-i18n="export.downloadTransparentPngBtn">Download PNG (Transparent)</button>
                                 <button id="openInDrawioBtn" type="button" class="text-xs bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded transition-colors font-medium" data-i18n="export.openCurrentInDrawioBtn">Open Current XML in Draw.io</button>
                                 <a id="openDrawioLink" href="https://app.diagrams.net/" target="_blank" rel="noopener noreferrer" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded transition-colors font-medium inline-flex items-center" data-i18n="export.openDrawioLink">Open Draw.io</a>
                             </div>
@@ -190,10 +191,6 @@
                             <h3 class="text-sm font-bold text-slate-700" data-i18n="history.title">Version History</h3>
                             <button id="clearHistoryBtn" type="button" class="text-xs text-slate-500 hover:text-slate-700 font-medium" data-i18n="history.clearBtn">Clear history</button>
                         </div>
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-xs font-medium text-slate-500" data-i18n="ai.currentModeLabel">目前模式</span>
-                            <span id="versionsCurrentSourceModeBadge" class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold text-indigo-700 border-indigo-200 bg-indigo-50"></span>
-                        </div>
                         <p id="aiHistoryEmpty" class="text-xs text-slate-500" data-i18n="history.empty">No AI change history yet.</p>
                         <ul id="aiHistoryList" class="space-y-2 mt-2 overflow-y-auto min-h-0 flex-1 pr-1"></ul>
                     </div>
@@ -275,6 +272,8 @@
                 <button id="closeShortcutsBtn" class="text-slate-400 hover:text-slate-600 text-xl leading-none" data-i18n-title="shortcuts.closeAriaLabel" aria-label="Close shortcuts">×</button>
             </div>
             <div class="grid grid-cols-[auto,1fr] gap-x-4 gap-y-2 text-sm text-slate-700">
+                <kbd class="px-2 py-1 rounded bg-slate-100 border border-slate-200 font-mono text-xs">Ctrl/Cmd + S</kbd>
+                <span data-i18n="shortcuts.downloadTransparentPng">Download transparent PNG</span>
                 <kbd class="px-2 py-1 rounded bg-slate-100 border border-slate-200 font-mono text-xs">+</kbd>
                 <span data-i18n="shortcuts.zoomIn">Zoom in preview</span>
                 <kbd class="px-2 py-1 rounded bg-slate-100 border border-slate-200 font-mono text-xs">-</kbd>

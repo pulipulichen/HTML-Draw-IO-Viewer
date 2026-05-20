@@ -208,4 +208,4 @@ async function initialize() {
     });
 }
 
-window.addEventListener("load", initialize);
+initialize();

@@ -22,9 +22,14 @@
 - Refactored viewer architecture into feature-focused modules under `scripts/core/viewer/` (`createDiagramViewer`, `renderEngine`, `panZoom`, `format`) and kept `scripts/core/viewer.js` as stable re-export.
 - Refactored app startup/event orchestration out of `scripts/main.js` into `scripts/features/appLifecycle.js` and isolated source-format state logic in `scripts/features/sourceFormatController.js`.
 - Updated sample button text from `Load Sample XML` to `Load Sample` (and corresponding Traditional Chinese text).
+- Updated Versions cards layout to move mode and quick actions beneath the thumbnail, keeping metadata and restore action visually separated.
+- Updated per-version mode badge text to compact labels (`DrawIO` / `Mermaid`) for faster scanning.
+- Updated Versions card header layout so `Restore this version` is rendered on its own row.
+- Removed the redundant top-level current-mode badge from the Versions tab to avoid duplicate mode indicators.
 
 ### Fixed
 
+- Fixed selected version-card highlight clipping at the top/left edges of the scroll container by using an inset ring style.
 - Fixed Mermaid preview failures for pasted Markdown fenced code blocks by normalizing Mermaid input before rendering.
 - Fixed Mermaid `Syntax error in text` rendering cases by adding pre-render Mermaid parse validation and defensive error handling for error-markup SVG output.
 
