@@ -8,22 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Draw.io 官方 Viewer 腳本 -->
     <script type="text/javascript" src="https://app.diagrams.net/js/viewer-static.min.js"></script>
-    <style>
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .geDiagramContainer { width: 100% !important; height: 100% !important; }
-        
-        /* 載入動畫轉圈圈 */
-        .spinner {
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top: 3px solid #ffffff;
-            width: 16px;
-            height: 16px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
+    <link rel="stylesheet" href="./styles/main.css">
 </head>
 <body class="bg-slate-100 h-screen flex flex-col md:flex-row overflow-hidden font-sans text-slate-800">
 
@@ -37,38 +22,13 @@
                 Draw.io AI 編輯器
             </h1>
 
-            <!-- 區塊 1：AI 設定與對話 -->
-            <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-4">
-                <div class="flex items-center gap-2 mb-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-600"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                    <h2 class="text-md font-bold text-indigo-900">Gemini AI 助手</h2>
+            <!-- 區塊 1：XML 編輯區 -->
+            <div class="flex flex-col min-h-[320px]">
+                <div class="flex justify-between items-center mb-1">
+                    <label class="block text-sm font-medium text-slate-600">XML 原始碼 (即時預覽)</label>
+                    <button id="formatBtn" class="text-xs text-blue-600 hover:text-blue-800 font-medium">重新渲染</button>
                 </div>
-                
-                <div class="grid grid-cols-1 gap-3 mb-3">
-                    <div>
-                        <label class="block text-xs font-medium text-indigo-700 mb-1">API Key</label>
-                        <input type="password" id="apiKeyInput" placeholder="輸入您的 Gemini API Key" class="w-full px-3 py-2 border border-indigo-200 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-indigo-700 mb-1">模型選擇</label>
-                        <select id="modelSelect" class="w-full px-3 py-2 border border-indigo-200 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white">
-                            <option value="gemini-2.5-flash" selected>Gemini Flash (Latest)</option>
-                            <option value="gemini-2.5-flash-preview-09-2025">gemini-2.5-flash-preview-09-2025</option>
-                            <option value="gemini-1.5-pro">gemini-1.5-pro</option>
-                            <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-medium text-indigo-700 mb-1">用自然語言修改圖表</label>
-                    <textarea id="aiPrompt" rows="3" placeholder="例如：幫我在最後面加一個紅色的「結束」節點，或是幫我產生一個登入流程圖..." class="w-full p-2 border border-indigo-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none bg-white"></textarea>
-                    <button id="askAiBtn" class="mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.64 3.68-1.25-1.25a.96.96 0 0 0-1.36 0l-3.23 3.23 1.25 1.25a.96.96 0 0 0 1.36 0l3.23-3.23a.96.96 0 0 0 0-1.36Z"></path><path d="m14.65 6.78 3.54 3.54"></path><path d="m3.38 18.2 2.37-2.37"></path><path d="m5.5 19.33-1.63 1.63a1 1 0 0 1-1.42 0l-1-1a1 1 0 0 1 0-1.42l1.63-1.63"></path><path d="M12.98 9.58 4.25 18.3l-1.04-1.04A3 3 0 0 1 2.3 15.1l7.85-8.73"></path><path d="M10.15 7.42 16.3 1.27a2.5 2.5 0 0 1 3.53 0l2.9 2.9a2.5 2.5 0 0 1 0 3.54L16.58 13.85"></path></svg>
-                        <span id="askAiBtnText">請 AI 產生/修改</span>
-                        <div id="aiSpinner" class="spinner hidden"></div>
-                    </button>
-                </div>
+                <textarea id="xmlInput" class="w-full min-h-[260px] p-3 border border-slate-300 rounded-md font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y shadow-inner bg-slate-50" placeholder="請在此貼上您的 Draw.io XML..."></textarea>
             </div>
 
             <!-- 區塊 2：匯入與工具 -->
@@ -93,13 +53,27 @@
                 </div>
             </div>
 
-            <!-- 區塊 3：XML 編輯區 -->
-            <div class="flex flex-col flex-1 min-h-[300px] border-t border-slate-200 pt-4 pb-2">
-                <div class="flex justify-between items-center mb-1">
-                    <label class="block text-sm font-medium text-slate-600">XML 原始碼 (即時預覽)</label>
-                    <button id="formatBtn" class="text-xs text-blue-600 hover:text-blue-800 font-medium">重新渲染</button>
+            <!-- 區塊 3：Gemini AI 助手 -->
+            <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-600"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                        <h2 class="text-md font-bold text-indigo-900">Gemini AI 助手</h2>
+                    </div>
+                    <button id="openGeminiSettingsBtn" class="text-xs bg-white border border-indigo-200 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-md transition-colors font-medium">
+                        Gemini 設定
+                    </button>
                 </div>
-                <textarea id="xmlInput" class="w-full flex-1 p-3 border border-slate-300 rounded-md font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none shadow-inner bg-slate-50" placeholder="請在此貼上您的 Draw.io XML..."></textarea>
+
+                <div>
+                    <label class="block text-xs font-medium text-indigo-700 mb-1">用自然語言修改圖表</label>
+                    <textarea id="aiPrompt" rows="3" placeholder="例如：幫我在最後面加一個紅色的「結束」節點，或是幫我產生一個登入流程圖..." class="w-full p-2 border border-indigo-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none bg-white"></textarea>
+                    <button id="askAiBtn" class="mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.64 3.68-1.25-1.25a.96.96 0 0 0-1.36 0l-3.23 3.23 1.25 1.25a.96.96 0 0 0 1.36 0l3.23-3.23a.96.96 0 0 0 0-1.36Z"></path><path d="m14.65 6.78 3.54 3.54"></path><path d="m3.38 18.2 2.37-2.37"></path><path d="m5.5 19.33-1.63 1.63a1 1 0 0 1-1.42 0l-1-1a1 1 0 0 1 0-1.42l1.63-1.63"></path><path d="M12.98 9.58 4.25 18.3l-1.04-1.04A3 3 0 0 1 2.3 15.1l7.85-8.73"></path><path d="M10.15 7.42 16.3 1.27a2.5 2.5 0 0 1 3.53 0l2.9 2.9a2.5 2.5 0 0 1 0 3.54L16.58 13.85"></path></svg>
+                        <span id="askAiBtnText">請 AI 產生/修改</span>
+                        <div id="aiSpinner" class="spinner hidden"></div>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -124,285 +98,31 @@
         </div>
     </div>
 
-    <script>
-        // --- 預設範例 XML ---
-        const defaultXML = `<mxfile host="app.diagrams.net" modified="2024-01-01T00:00:00.000Z" agent="Mozilla/5.0" version="21.0.0" type="device">
-  <diagram id="demo" name="Demo">
-    <mxGraphModel dx="1000" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
-      <root>
-        <mxCell id="0" />
-        <mxCell id="1" parent="0" />
-        <mxCell id="2" value="開始" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
-          <mxGeometry x="360" y="80" width="120" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="3" value="這是一個即時預覽" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
-          <mxGeometry x="360" y="200" width="120" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="4" value="" style="endArrow=classic;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="2" target="3">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="400" y="320" as="sourcePoint" />
-            <mxPoint x="450" y="270" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="5" value="試著用 AI 修改圖表！" style="ellipse;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
-          <mxGeometry x="360" y="320" width="120" height="80" as="geometry" />
-        </mxCell>
-        <mxCell id="6" value="" style="endArrow=classic;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="3" target="5">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="410" y="280" as="sourcePoint" />
-            <mxPoint x="410" y="330" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-      </root>
-    </mxGraphModel>
-  </diagram>
-</mxfile>`;
+    <!-- Gemini 設定 Modal -->
+    <div id="geminiSettingsModal" class="fixed inset-0 z-40 hidden items-center justify-center p-4">
+        <div id="geminiSettingsBackdrop" class="absolute inset-0 bg-slate-900/60"></div>
+        <div class="relative z-10 w-full max-w-md bg-white rounded-xl shadow-2xl border border-slate-200 p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-slate-800">Gemini 設定</h3>
+                <button id="closeGeminiSettingsBtn" class="text-slate-400 hover:text-slate-600 text-xl leading-none" aria-label="關閉設定">×</button>
+            </div>
+            <div class="grid gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">API Key</label>
+                    <input type="password" id="apiKeyInput" placeholder="輸入您的 Gemini API Key" class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">模型名稱</label>
+                    <input type="text" id="modelInput" placeholder="gemini-flash-latest" class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white">
+                </div>
+            </div>
+            <div class="mt-4 flex justify-end gap-2">
+                <button id="cancelGeminiSettingsBtn" class="px-4 py-2 text-sm border border-slate-300 rounded-md hover:bg-slate-100 transition-colors">取消</button>
+                <button id="saveGeminiSettingsBtn" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition-colors">儲存設定</button>
+            </div>
+        </div>
+    </div>
 
-        // 系統自動帶入的預設 API Key
-        const envApiKey = ""; 
-
-        // --- DOM 元素綁定 ---
-        const xmlInput = document.getElementById('xmlInput');
-        const urlInput = document.getElementById('urlInput');
-        const fetchBtn = document.getElementById('fetchBtn');
-        const dropzone = document.getElementById('dropzone');
-        const fileInput = document.getElementById('fileInput');
-        const uploadBtn = document.getElementById('uploadBtn');
-        const formatBtn = document.getElementById('formatBtn');
-        const loadSampleBtn = document.getElementById('loadSampleBtn');
-        const viewerContainer = document.getElementById('viewerContainer');
-        const toast = document.getElementById('toast');
-        const loadingState = document.getElementById('loadingState');
-        
-        // AI 相關 DOM
-        const apiKeyInput = document.getElementById('apiKeyInput');
-        const modelSelect = document.getElementById('modelSelect');
-        const aiPrompt = document.getElementById('aiPrompt');
-        const askAiBtn = document.getElementById('askAiBtn');
-        const askAiBtnText = document.getElementById('askAiBtnText');
-        const aiSpinner = document.getElementById('aiSpinner');
-
-        // --- Toast 提示功能 ---
-        let toastTimeout;
-        function showToast(message, isError = false) {
-            toast.textContent = message;
-            toast.className = \`absolute top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded shadow-lg text-sm transition-opacity duration-300 z-50 \${isError ? 'bg-red-600 text-white' : 'bg-slate-800 text-white'}\`;
-            toast.style.opacity = '1';
-            clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => toast.style.opacity = '0', 3000);
-        }
-
-        // --- 核心渲染功能 ---
-        function renderDiagram(xmlString) {
-            if (!xmlString || xmlString.trim() === "") {
-                viewerContainer.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-slate-400">目前沒有內容可以預覽</div>';
-                return;
-            }
-            try {
-                viewerContainer.innerHTML = '';
-                const div = document.createElement('div');
-                div.className = 'mxgraph';
-                div.style.width = '100%';
-                div.style.height = '100%';
-                
-                const config = {
-                    highlight: "#4f46e5", // indigo-600
-                    nav: true,
-                    resize: true,
-                    toolbar: "zoom pan lightbox",
-                    xml: xmlString
-                };
-                div.setAttribute('data-mxgraph', JSON.stringify(config));
-                viewerContainer.appendChild(div);
-
-                if (typeof GraphViewer !== 'undefined') {
-                    GraphViewer.processElements();
-                }
-            } catch (error) {
-                console.error("渲染錯誤:", error);
-                showToast("XML 解析失敗，請檢查格式是否正確。", true);
-            }
-        }
-
-        // --- Debounce 即時預覽 ---
-        let renderTimeout;
-        xmlInput.addEventListener('input', () => {
-            clearTimeout(renderTimeout);
-            renderTimeout = setTimeout(() => renderDiagram(xmlInput.value), 600);
-        });
-
-        // --- 載入範例 ---
-        loadSampleBtn.addEventListener('click', () => {
-            // 加入短暫的清空狀態，讓使用者明確感受到「畫面有重新整理」
-            viewerContainer.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-slate-400 font-medium">重設圖表中...</div>';
-            setTimeout(() => {
-                xmlInput.value = defaultXML;
-                renderDiagram(defaultXML);
-                showToast("已載入範例圖表");
-            }, 150);
-        });
-
-        // --- 網址載入功能 ---
-        fetchBtn.addEventListener('click', async () => {
-            const url = urlInput.value.trim();
-            if (!url) { showToast("請輸入網址", true); return; }
-            fetchBtn.disabled = true;
-            fetchBtn.textContent = '載入中';
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(\`HTTP error! status: \${response.status}\`);
-                const text = await response.text();
-                xmlInput.value = text;
-                renderDiagram(text);
-                showToast("成功載入網址內容");
-            } catch (error) {
-                showToast("載入失敗 (可能為 CORS 限制)", true);
-            } finally {
-                fetchBtn.disabled = false;
-                fetchBtn.textContent = '載入';
-            }
-        });
-
-        // --- 拖曳與按鈕檔案上傳功能 ---
-        // 1. 按鈕點擊上傳
-        uploadBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // 避免冒泡觸發 dropzone
-            fileInput.click();
-        });
-        
-        // 2. 點擊整個虛線框也可以上傳
-        dropzone.addEventListener('click', () => fileInput.click());
-
-        // 監聽檔案選擇改變
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) handleFile(e.target.files[0]);
-            e.target.value = ''; 
-        });
-
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
-            dropzone.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); });
-            document.body.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); });
-        });
-        ['dragenter', 'dragover'].forEach(evt => dropzone.addEventListener(evt, () => dropzone.classList.add('border-blue-500', 'bg-blue-50')));
-        ['dragleave', 'drop'].forEach(evt => dropzone.addEventListener(evt, () => dropzone.classList.remove('border-blue-500', 'bg-blue-50')));
-        dropzone.addEventListener('drop', (e) => {
-            if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
-        });
-
-        function handleFile(file) {
-            if (!file.name.endsWith('.xml') && !file.name.endsWith('.drawio')) {
-                showToast("僅支援 .xml 或 .drawio", true);
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                xmlInput.value = e.target.result;
-                renderDiagram(e.target.result);
-                showToast(\`載入: \${file.name}\`);
-            };
-            reader.onerror = () => showToast("讀取錯誤", true);
-            reader.readAsText(file);
-        }
-
-        // --- 手動更新 ---
-        formatBtn.addEventListener('click', () => {
-            renderDiagram(xmlInput.value);
-            showToast("已重新渲染");
-        });
-
-        // --- Gemini AI 整合 ---
-        async function fetchWithRetry(url, options, maxRetries = 5) {
-            const delays = [1000, 2000, 4000, 8000, 16000];
-            for (let i = 0; i < maxRetries; i++) {
-                try {
-                    const response = await fetch(url, options);
-                    if (!response.ok) {
-                        const err = await response.json();
-                        throw new Error(err.error?.message || \`HTTP \${response.status}\`);
-                    }
-                    return await response.json();
-                } catch (e) {
-                    if (i === maxRetries - 1) throw e;
-                    console.log(\`Retry \${i+1}...\`);
-                    await new Promise(res => setTimeout(res, delays[i]));
-                }
-            }
-        }
-
-        askAiBtn.addEventListener('click', async () => {
-            const prompt = aiPrompt.value.trim();
-            const currentXml = xmlInput.value.trim();
-            const apiKey = apiKeyInput.value.trim() || envApiKey;
-            const model = modelSelect.value;
-
-            if (!prompt) {
-                showToast("請輸入你想請 AI 修改的需求！", true);
-                aiPrompt.focus();
-                return;
-            }
-            if (!apiKey) {
-                showToast("請輸入您的 Gemini API Key", true);
-                apiKeyInput.focus();
-                return;
-            }
-
-            // UI 狀態切換
-            askAiBtn.disabled = true;
-            askAiBtnText.textContent = "AI 思考中...";
-            aiSpinner.classList.remove('hidden');
-            askAiBtn.classList.add('opacity-75', 'cursor-not-allowed');
-
-            try {
-                const url = \`https://generativelanguage.googleapis.com/v1beta/models/\${model}:generateContent?key=\${apiKey}\`;
-                
-                const systemPrompt = "你是一個精通 Draw.io (mxGraph) XML 結構的專家。使用者的目標是根據他們的要求建立或修改 Draw.io 圖表。請你只回傳純 XML 字串，絕對不要包含任何 Markdown 格式標記（如 ```xml），也不要加上任何多餘的解釋或對話。必須確保輸出的內容是可以直接被 Draw.io 解析的合法 XML，以 <mxfile> 開頭，</mxfile> 結尾。請注意圖表中各節點的座標 x,y 佈局，讓他們看起來是整齊的。";
-                
-                const userPrompt = currentXml 
-                    ? \`這是我目前的 Draw.io XML 程式碼:\n\n\${currentXml}\n\n使用者的修改需求：\${prompt}\`
-                    : \`請幫我產生一個全新的 Draw.io 圖表。使用者的需求：\${prompt}\`;
-
-                const payload = {
-                    contents: [{ parts: [{ text: userPrompt }] }],
-                    systemInstruction: { parts: [{ text: systemPrompt }] }
-                };
-
-                const data = await fetchWithRetry(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                let resultText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (!resultText) throw new Error("AI 回應格式錯誤");
-
-                // 清理潛在的 Markdown 標籤
-                resultText = resultText.replace(/^```(xml)?\s*/i, '').replace(/```\s*$/i, '').trim();
-
-                // 更新畫面
-                xmlInput.value = resultText;
-                renderDiagram(resultText);
-                aiPrompt.value = ""; // 清空輸入框
-                showToast("AI 已完成圖表更新！");
-
-            } catch (error) {
-                console.error("AI 請求失敗:", error);
-                showToast(\`AI 請求失敗: \${error.message}\`, true);
-            } finally {
-                askAiBtn.disabled = false;
-                askAiBtnText.textContent = "請 AI 產生/修改";
-                aiSpinner.classList.add('hidden');
-                askAiBtn.classList.remove('opacity-75', 'cursor-not-allowed');
-            }
-        });
-
-        // --- 初始化 ---
-        window.onload = () => {
-            xmlInput.value = defaultXML;
-            setTimeout(() => {
-                loadingState.style.display = 'none';
-                renderDiagram(defaultXML);
-            }, 500);
-        };
-    </script>
+    <script type="module" src="./scripts/app.js"></script>
 </body>
 </html>
