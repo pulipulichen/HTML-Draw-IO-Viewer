@@ -27,11 +27,14 @@
 - Updated startup behavior to restore the last saved diagram from `localStorage`, falling back to `example.drawio` when no user default exists.
 - Updated UI copy, placeholders, and runtime toast messages to switch immediately with the selected language.
 - Updated favicon references across HTML metadata, manifest icons, and service-worker cache entries to use `assets/favicon/favicon.png`.
+- Updated preview interactions to support wheel zoom and left-drag pan across the entire right-side preview area, not only on diagram shapes.
+- Updated the Draw.io viewer configuration to disable lightbox behavior so clicking the preview no longer opens a modal.
 
 ### Improved
 - Enhanced UI feedback with toast notifications and loading states for user actions.
 - Added zoom/pan enabled Draw.io viewer toolbar for easier diagram inspection.
 - Improved installation readiness for mobile/desktop browsers with full PWA meta/link tags.
+- Improved preview centering so rendered diagrams initialize at the center of the preview pane and stay centered before user interaction.
 
 ### Fixed
 - Added AI response cleanup to strip markdown code fences before rendering returned XML.
@@ -40,3 +43,5 @@
 - Fixed XML draft persistence timing by saving editor content to `localStorage` on every input and again before page unload.
 - Fixed Docker-based Playwright module resolution by linking `/app/node_modules` to `/deps/node_modules`, preventing `ERR_MODULE_NOT_FOUND` for `@playwright/test` in ESM config/spec imports.
 - Fixed the i18n persistence E2E scenario by replacing `page.addInitScript` with one-time `localStorage` setup before reload, so language state assertions no longer reset to `en` on every navigation.
+- Fixed accidental text selection in the preview pane by disabling text selection styles during drag/pan interactions.
+- Fixed stale frontend assets after updates by switching same-origin service-worker fetch handling to network-first with cache fallback and a controller-change reload path.

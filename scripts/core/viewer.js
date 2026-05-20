@@ -11,6 +11,7 @@ function setupMousePanZoom(viewerContainer, diagramHost) {
     let scale = 1;
     let offsetX = 0;
     let offsetY = 0;
+    let hasInteracted = false;
     let isDragging = false;
     let dragPointerId = null;
     let startX = 0;
@@ -56,8 +57,45 @@ function setupMousePanZoom(viewerContainer, diagramHost) {
         target.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
     };
 
+    const centerContent = () => {
+        const target = resolveTransformTarget();
+        if (!(target instanceof HTMLElement)) {
+            return false;
+        }
+
+        const measureTarget = diagramHost.querySelector("svg") || target;
+        applyTransform();
+
+        const containerRect = viewerContainer.getBoundingClientRect();
+        const contentRect = measureTarget.getBoundingClientRect();
+
+        if (
+            !containerRect.width ||
+            !containerRect.height ||
+            !contentRect.width ||
+            !contentRect.height
+        ) {
+            return false;
+        }
+
+        const deltaX =
+            containerRect.left + containerRect.width / 2 - (contentRect.left + contentRect.width / 2);
+        const deltaY =
+            containerRect.top + containerRect.height / 2 - (contentRect.top + contentRect.height / 2);
+
+        if (Math.abs(deltaX) < 0.5 && Math.abs(deltaY) < 0.5) {
+            return true;
+        }
+
+        offsetX += deltaX;
+        offsetY += deltaY;
+        applyTransform();
+        return true;
+    };
+
     const onWheel = (event) => {
         event.preventDefault();
+        hasInteracted = true;
 
         const nextScale = clamp(
             scale * (event.deltaY < 0 ? 1.1 : 0.9),
@@ -87,10 +125,7 @@ function setupMousePanZoom(viewerContainer, diagramHost) {
             return;
         }
 
-        if (event.target instanceof Element && event.target.closest(".geToolbarContainer")) {
-            return;
-        }
-
+        hasInteracted = true;
         isDragging = true;
         dragPointerId = event.pointerId;
         startX = event.clientX - offsetX;
@@ -124,12 +159,27 @@ function setupMousePanZoom(viewerContainer, diagramHost) {
         }
     };
 
-    const eventTarget = diagramHost;
+    const eventTarget = viewerContainer;
     const observer = new MutationObserver(() => {
+        if (!hasInteracted && centerContent()) {
+            return;
+        }
         applyTransform();
     });
 
     observer.observe(diagramHost, { childList: true, subtree: true });
+    let resizeObserver = null;
+    if (typeof window.ResizeObserver === "function") {
+        resizeObserver = new window.ResizeObserver(() => {
+            if (!hasInteracted && centerContent()) {
+                return;
+            }
+            applyTransform();
+        });
+    }
+    if (resizeObserver) {
+        resizeObserver.observe(viewerContainer);
+    }
 
     eventTarget.addEventListener("wheel", onWheel, { passive: false, capture: true });
     eventTarget.addEventListener("pointerdown", onPointerDown, { capture: true });
@@ -137,10 +187,15 @@ function setupMousePanZoom(viewerContainer, diagramHost) {
     window.addEventListener("pointerup", releaseDragState, { capture: true });
     window.addEventListener("pointercancel", releaseDragState, { capture: true });
 
-    applyTransform();
+    if (!centerContent()) {
+        applyTransform();
+    }
 
     return () => {
         observer.disconnect();
+        if (resizeObserver) {
+            resizeObserver.disconnect();
+        }
         eventTarget.removeEventListener("wheel", onWheel, true);
         eventTarget.removeEventListener("pointerdown", onPointerDown, true);
         window.removeEventListener("pointermove", onPointerMove, true);
