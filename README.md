@@ -1,4 +1,4 @@
-# HTML Draw.io Viewer
+# HTML AI Diagram Editor
 
 [English](./README.md) | [繁體中文](./README_zh_tw.md)
 

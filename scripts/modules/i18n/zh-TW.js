@@ -1,11 +1,11 @@
 window.I18N_TRANSLATIONS = window.I18N_TRANSLATIONS || {};
 
 window.I18N_TRANSLATIONS["zh-TW"] = {
-    "meta.title": "AI Dragram Editor",
+    "meta.title": "HTML AI Diagram Editor",
     "language.label": "語系",
     "language.en": "English",
     "language.zh-TW": "繁體中文",
-    "header.title": "AI Dragram Editor",
+    "header.title": "HTML AI Diagram Editor",
     "tabs.editor": "原始碼 (X)",
     "tabs.aiEditor": "AI編輯 (Tab)",
     "tabs.versions": "版本紀錄 (V)",

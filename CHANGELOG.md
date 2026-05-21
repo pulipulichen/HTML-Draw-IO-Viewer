@@ -28,6 +28,7 @@
 - Updated Mermaid-mode source downloads to normalize export filenames to the `.mmd` extension.
 - Updated version history entries to persist and display the source mode captured at creation time (instead of showing only the current global mode).
 - Updated app branding/title text across HTML title, i18n metadata, and PWA manifest to `AI Dragram Editor` (including `short_name`).
+- Renamed project/app display name to `HTML AI Diagram Editor` across HTML title, i18n metadata, PWA manifest (`name` / `short_name`), and both README titles.
 - Updated Mermaid-mode AI behavior to keep responses in Mermaid by default, and only return Draw.io XML when the prompt explicitly requests conversion.
 - Refactored viewer architecture into feature-focused modules under `scripts/core/viewer/` (`createDiagramViewer`, `renderEngine`, `panZoom`, `format`) and kept `scripts/core/viewer.js` as stable re-export.
 - Refactored app startup/event orchestration out of `scripts/main.js` into `scripts/features/appLifecycle.js` and isolated source-format state logic in `scripts/features/sourceFormatController.js`.
