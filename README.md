@@ -5,7 +5,7 @@
 A lightweight browser app for loading, previewing, and AI-editing Draw.io and Mermaid diagrams.  
 It combines the Draw.io viewer, Mermaid rendering, and Gemini-powered workflows in a pure frontend architecture, including highlighted snapshots, full-diagram snapshots, and local version history.
 
-- Online demo: [https://pulipulichen.github.io/HTML-Draw-IO-Viewer/](https://pulipulichen.github.io/HTML-Draw-IO-Viewer/)
+- Online demo: [https://pulipulichen.github.io/HTML-AI-Diagram-Editor/](https://pulipulichen.github.io/HTML-AI-Diagram-Editor/)
 
 ## Features
 

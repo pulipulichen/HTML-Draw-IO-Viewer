@@ -5,7 +5,7 @@
 這是一個輕量化的瀏覽器應用，提供 Draw.io / Mermaid 圖表的載入、預覽與 AI 編輯。  
 專案以純前端架構整合 Draw.io Viewer、Mermaid 渲染與 Gemini 對話式工作流，並提供標亮快照、完整快照與本機版本記錄功能。
 
-- 線上示範：[https://pulipulichen.github.io/HTML-Draw-IO-Viewer/](https://pulipulichen.github.io/HTML-Draw-IO-Viewer/)
+- 線上示範：[https://pulipulichen.github.io/HTML-AI-Diagram-Editor/](https://pulipulichen.github.io/HTML-AI-Diagram-Editor/)
 
 ## 功能特色
 

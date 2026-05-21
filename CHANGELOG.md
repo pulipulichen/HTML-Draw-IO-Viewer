@@ -66,6 +66,7 @@
 - Updated snapshot preview behavior to support both highlighted-region snapshots and full-diagram reference snapshots in a single shared preview area with source-aware metadata.
 - Updated AI request assembly to prioritize user-attached full snapshots as `diagramReferenceImage`, while keeping highlighted-region snapshots as the dedicated partial-edit input path.
 - Updated `README.md` and `README_zh_tw.md` to align docs with current dual-mode behavior (Draw.io/Mermaid), including mode-aware export (`XML`/`MMD`), source-format switching, prompt-history workflows, full-snapshot attachment, and the renamed `Load Sample` interaction flow.
+- Updated the online demo link in both `README.md` and `README_zh_tw.md` to `https://pulipulichen.github.io/HTML-AI-Diagram-Editor/`.
 
 ### Fixed
 
