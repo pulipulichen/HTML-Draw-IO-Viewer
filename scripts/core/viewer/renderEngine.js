@@ -25,10 +25,12 @@ function loadMermaidModule() {
 }
 
 function removeRoleElement(viewerContainer, selector) {
-    const element = viewerContainer.querySelector(selector);
-    if (element instanceof HTMLElement) {
-        element.remove();
-    }
+    const elements = Array.from(viewerContainer.querySelectorAll(selector));
+    elements.forEach((element) => {
+        if (element instanceof Element) {
+            element.remove();
+        }
+    });
 }
 
 function createDiagramHost() {

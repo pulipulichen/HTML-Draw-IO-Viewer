@@ -1,10 +1,10 @@
 flowchart TD
-    A[Start] --> B{User Logged In?}
-    B -- Yes --> C[Open Dashboard]
-    B -- No --> D[Show Login Form]
-    D --> E[Submit Credentials]
-    E --> F{Valid?}
-    F -- Yes --> C
-    F -- No --> G[Show Error Message]
+    A[開始] --> B{使用者已登入？}
+    B -- 是 --> C[開啟儀表板]
+    B -- 否 --> D[顯示登入表單]
+    D --> E[送出帳號密碼]
+    E --> F{驗證成功？}
+    F -- 是 --> C
+    F -- 否 --> G[顯示錯誤訊息]
     G --> D
-    C --> H[Done]
+    C --> H[完成]

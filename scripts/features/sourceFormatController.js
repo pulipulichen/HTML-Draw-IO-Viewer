@@ -72,6 +72,7 @@ export function createSourceFormatController({
     function updatePromptExamplesBySourceFormat() {
         const showDrawioExample = currentSourceFormat === "drawio";
         dom.drawioCompactPromptBtn.classList.toggle("hidden", !showDrawioExample);
+        dom.drawioTranslatePromptBtn.classList.toggle("hidden", false);
         if (showDrawioExample) {
             dom.aiDemoBtn.textContent = t(
                 "ai.demoBtnDrawio",

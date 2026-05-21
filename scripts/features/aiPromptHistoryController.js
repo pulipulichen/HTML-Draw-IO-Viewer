@@ -30,6 +30,14 @@ export function createAiPromptHistoryController({
     maxItems = 50
 }) {
     let prompts = [];
+    let isExpanded = false;
+
+    function setExpanded(nextExpanded) {
+        isExpanded = Boolean(nextExpanded);
+        dom.promptHistoryPanel.classList.toggle("hidden", !isExpanded);
+        dom.togglePromptHistoryBtn.setAttribute("aria-expanded", String(isExpanded));
+        dom.promptHistoryToggleText.textContent = isExpanded ? t("ai.promptHistoryCollapseBtn") : t("ai.promptHistoryExpandBtn");
+    }
 
     function persist() {
         writeStoredValue(storageKey, JSON.stringify(prompts));
@@ -116,6 +124,10 @@ export function createAiPromptHistoryController({
     }
 
     function registerEvents() {
+        dom.togglePromptHistoryBtn.addEventListener("click", () => {
+            setExpanded(!isExpanded);
+        });
+
         dom.promptHistorySearchInput.addEventListener("input", () => {
             render();
         });
@@ -161,6 +173,7 @@ export function createAiPromptHistoryController({
     function initialize() {
         prompts = normalizePromptList(readStoredJson(storageKey, []));
         persist();
+        setExpanded(false);
         render();
         registerEvents();
     }
@@ -168,6 +181,9 @@ export function createAiPromptHistoryController({
     return {
         initialize,
         addPrompt,
-        refreshTexts: render
+        refreshTexts: () => {
+            setExpanded(isExpanded);
+            render();
+        }
     };
 }

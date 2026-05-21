@@ -1,3 +1,24 @@
+@font-face {
+    font-family: "Noto Sans TC Local";
+    src: url("../assets/fonts/NotoSansTC-wght.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: block;
+}
+
+body {
+    font-family: "Noto Sans TC Local", "Noto Sans TC", "Noto Sans CJK TC", "PingFang TC",
+        "Microsoft JhengHei", "Heiti TC", sans-serif;
+}
+
+#viewerContainer svg text,
+#viewerContainer svg tspan,
+#viewerContainer svg foreignObject,
+#viewerContainer svg foreignObject * {
+    font-family: "Noto Sans TC Local", "Noto Sans TC", "Noto Sans CJK TC", "PingFang TC",
+        "Microsoft JhengHei", "Heiti TC", sans-serif !important;
+}
+
 .no-scrollbar::-webkit-scrollbar {
     display: none;
 }

@@ -4,6 +4,7 @@ const DATA_URI_CACHE_NAME = "drawio-embedded-font-data-uri-v1";
 const DATA_URI_CACHE_KEY = "./assets/fonts/NotoSansTC-wght.ttf.data-uri.txt";
 
 let embeddedFontDataUriPromise = null;
+let previewFontPreloadPromise = null;
 
 function blobToDataUri(blob) {
     return new Promise((resolve, reject) => {
@@ -74,4 +75,37 @@ export async function getEmbeddedNotoSansTcFontDataUri() {
         });
     }
     return embeddedFontDataUriPromise;
+}
+
+export async function preloadNotoSansTcFontForPreview() {
+    if (!previewFontPreloadPromise) {
+        previewFontPreloadPromise = (async () => {
+            if (
+                typeof document === "undefined" ||
+                !document.fonts ||
+                typeof window === "undefined" ||
+                typeof window.FontFace !== "function"
+            ) {
+                return;
+            }
+            if (document.fonts.check("400 1em 'Noto Sans TC Local'")) {
+                return;
+            }
+            const previewFont = new window.FontFace(
+                "Noto Sans TC Local",
+                `url('${EMBED_FONT_URL}') format('${EMBED_FONT_FORMAT}')`,
+                {
+                    style: "normal",
+                    weight: "100 900"
+                }
+            );
+            const loadedFace = await previewFont.load();
+            document.fonts.add(loadedFace);
+            await document.fonts.load("400 1em 'Noto Sans TC Local'");
+        })().catch((error) => {
+            previewFontPreloadPromise = null;
+            throw error;
+        });
+    }
+    return previewFontPreloadPromise;
 }

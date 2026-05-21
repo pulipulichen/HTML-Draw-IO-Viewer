@@ -22,7 +22,7 @@ export function registerAiEvents(options) {
     } = options;
     const AI_DEMO_CONFIG = {
         drawio: {
-            prompt: "翻譯成英文",
+            prompt: "請保留目前圖表的結構與連線，將所有節點與標籤文字翻譯成英文。",
             filePath: "./demo/drawio_example2.drawio"
         },
         mermaid: {

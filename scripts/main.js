@@ -23,6 +23,7 @@ import { initializeI18n, onLanguageChange, t } from "./modules/i18n.js";
 import { registerServiceWorker } from "./pwa/registerServiceWorker.js";
 import { requestAiXml } from "./services/aiService.js";
 import { isSupportedDiagramFile, readTextFile } from "./services/fileService.js";
+import { preloadNotoSansTcFontForPreview } from "./services/fontEmbedService.js";
 import { fetchXmlFromUrl } from "./services/networkService.js";
 import { createToastController } from "./ui/toast.js";
 import { debounce } from "./utils/debounce.js";
@@ -210,6 +211,11 @@ function refreshI18nDrivenUi() {
 }
 
 async function initialize() {
+    try {
+        await preloadNotoSansTcFontForPreview();
+    } catch (_error) {
+        // Keep app boot resilient if local font loading fails.
+    }
     await initializeApp({
         dom,
         uiStateController,

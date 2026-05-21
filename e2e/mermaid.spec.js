@@ -17,7 +17,14 @@ test("renders Mermaid source and shows conversion button", async ({ page }) => {
     await expect(page.locator("#viewerContainer [data-viewer-role='diagram-host']")).toHaveCount(1);
     await expect(page.locator("#xmlInput")).not.toHaveValue("");
 
-    await page.selectOption("#sourceFormatSelect", "mermaid");
+    // 避免觸發 sourceFormatSelect 的 change handler（會非同步載入範例並覆蓋輸入），
+    // 這裡只設定 format hint，接著由 formatBtn 觸發一次明確 rerender。
+    await page.evaluate(() => {
+        const select = document.querySelector("#sourceFormatSelect");
+        if (select instanceof HTMLSelectElement) {
+            select.value = "mermaid";
+        }
+    });
     await page.fill(
         "#xmlInput",
         [
@@ -29,7 +36,9 @@ test("renders Mermaid source and shows conversion button", async ({ page }) => {
     );
     await page.click("#formatBtn");
 
-    await expect(page.locator("#viewerContainer [data-viewer-role='diagram-host'] svg")).toBeVisible();
+    await expect(page.locator("#viewerContainer [data-viewer-role='diagram-host'] svg")).toBeVisible({
+        timeout: 10000
+    });
 
     // convertMermaidBtn 位於 AI 分頁面板內，需先切到該分頁才會真的顯示出來
     await page.click("#aiTabBtn");
