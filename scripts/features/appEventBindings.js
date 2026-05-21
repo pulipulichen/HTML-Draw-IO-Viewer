@@ -529,153 +529,157 @@ async function drawSvgBlobToCanvas(canvas, context, svgBlob) {
     await renderFromUrl(dataUrl);
 }
 
-async function exportDiagramAsTransparentPng({ dom, fileNameManager, toast, t }) {
+async function generateTransparentPngBlob(dom) {
     const diagramHost = dom.viewerContainer.querySelector('[data-viewer-role="diagram-host"]');
     const sourceSvg = diagramHost?.querySelector("svg");
     if (!isSvgElement(sourceSvg)) {
-        toast.show(t("toast.noDiagramToDownload"), true);
-        return;
+        throw new Error("no diagram to export");
     }
 
+    const sourceFormat = String(dom.currentSourceModeBadge?.textContent || "").toLowerCase();
+    const trimPadding = sourceFormat.includes("mermaid") ? 8 : 4;
+    const { width: baseExportWidth, height: baseExportHeight } = resolveSvgExportDimensions(sourceSvg);
+    const { width: exportWidth, height: exportHeight } = resolveHighResolutionExportDimensions(
+        baseExportWidth,
+        baseExportHeight,
+        sourceFormat
+    );
+    let embeddedFontDataUri = "";
+    try {
+        embeddedFontDataUri = await getEmbeddedNotoSansTcFontDataUri();
+    } catch (_fontLoadError) {
+        // Embedded font is optional; rasterization will fall back to system fonts.
+    }
+    const svgMarkup = buildTransparentSvgMarkup(sourceSvg, {
+        targetWidth: exportWidth,
+        targetHeight: exportHeight,
+        embeddedFontDataUri
+    });
+    const svgBlob = new Blob([svgMarkup], { type: "image/svg+xml;charset=utf-8" });
+
+    const canvas = document.createElement("canvas");
+    canvas.width = exportWidth;
+    canvas.height = exportHeight;
+
+    const context = canvas.getContext("2d");
+    if (!context) {
+        throw new Error("canvas context unavailable");
+    }
+
+    let rendered = false;
+    try {
+        await drawSvgBlobToCanvas(canvas, context, svgBlob);
+        rendered = true;
+    } catch (_svgDrawError) {
+        rendered = false;
+    }
+
+    let pngBlob = null;
+    if (rendered) {
+        const trimmedCanvas = trimCanvasTransparentEdges(
+            canvas,
+            trimPadding,
+            2
+        );
+        try {
+            // Keep canvas alpha channel untouched to export transparent background PNG.
+            pngBlob = await canvasToPngBlob(trimmedCanvas);
+        } catch (_canvasExportError) {
+            // canvas.toBlob can throw SecurityError when the canvas is tainted
+            // by cross-origin resources rendered into the SVG; fall through to
+            // the html-to-image renderer which performs its own inlining.
+            pngBlob = null;
+        }
+    }
+
+    if (!pngBlob) {
+        try {
+            const module = await loadHtmlToImageModule();
+            // Render the enlarged stand-alone SVG markup off-screen instead of the
+            // live DOM SVG (which is currently transformed by pan/zoom). This keeps
+            // the fallback at the same high resolution as the main path.
+            const offscreenHost = document.createElement("div");
+            offscreenHost.style.position = "fixed";
+            offscreenHost.style.left = "-99999px";
+            offscreenHost.style.top = "0";
+            offscreenHost.style.pointerEvents = "none";
+            offscreenHost.style.background = "transparent";
+            offscreenHost.style.width = `${exportWidth}px`;
+            offscreenHost.style.height = `${exportHeight}px`;
+            offscreenHost.innerHTML = svgMarkup;
+            document.body.appendChild(offscreenHost);
+            const offscreenSvg = offscreenHost.querySelector("svg");
+            if (offscreenSvg instanceof Element) {
+                offscreenSvg.setAttribute("width", String(exportWidth));
+                offscreenSvg.setAttribute("height", String(exportHeight));
+                offscreenSvg.style.width = `${exportWidth}px`;
+                offscreenSvg.style.height = `${exportHeight}px`;
+            }
+            // html-to-image tends to render SVG element content at roughly half of
+            // the requested canvas size in some browsers. Bump pixelRatio so the
+            // produced bitmap still hits the target dimensions.
+            const fallbackPixelRatio = 3;
+            try {
+                if (offscreenSvg && typeof module?.toBlob === "function") {
+                    pngBlob = await module.toBlob(offscreenSvg, {
+                        cacheBust: true,
+                        backgroundColor: "rgba(0,0,0,0)",
+                        pixelRatio: fallbackPixelRatio,
+                        width: exportWidth,
+                        height: exportHeight,
+                        canvasWidth: exportWidth,
+                        canvasHeight: exportHeight,
+                        skipAutoScale: true,
+                        style: {
+                            transform: "none",
+                            background: "transparent",
+                            backgroundColor: "transparent"
+                        }
+                    });
+                }
+                if (!pngBlob && offscreenSvg && typeof module?.toPng === "function") {
+                    const dataUrl = await module.toPng(offscreenSvg, {
+                        cacheBust: true,
+                        backgroundColor: "rgba(0,0,0,0)",
+                        pixelRatio: fallbackPixelRatio,
+                        width: exportWidth,
+                        height: exportHeight,
+                        canvasWidth: exportWidth,
+                        canvasHeight: exportHeight,
+                        skipAutoScale: true
+                    });
+                    pngBlob = await dataUrlToBlob(dataUrl);
+                }
+            } finally {
+                offscreenHost.remove();
+            }
+        } catch (_fallbackError) {
+            pngBlob = null;
+        }
+    }
+
+    if (pngBlob) {
+        try {
+            pngBlob = await normalizePngBlobBounds(pngBlob, {
+                padding: trimPadding,
+                alphaThreshold: 2
+            });
+        } catch (_normalizeError) {
+            // Keep the un-normalized blob if trimming fails for any reason.
+        }
+    }
+
+    if (!pngBlob) {
+        throw new Error("png encoding failed");
+    }
+
+    return pngBlob;
+}
+
+async function exportDiagramAsTransparentPng({ dom, fileNameManager, toast, t }) {
     try {
         const exportFileName = getPngExportFileName(fileNameManager.getEffectiveExportFileName());
-        const sourceFormat = String(dom.currentSourceModeBadge?.textContent || "").toLowerCase();
-        const trimPadding = sourceFormat.includes("mermaid") ? 8 : 4;
-        const { width: baseExportWidth, height: baseExportHeight } = resolveSvgExportDimensions(sourceSvg);
-        const { width: exportWidth, height: exportHeight } = resolveHighResolutionExportDimensions(
-            baseExportWidth,
-            baseExportHeight,
-            sourceFormat
-        );
-        let embeddedFontDataUri = "";
-        try {
-            embeddedFontDataUri = await getEmbeddedNotoSansTcFontDataUri();
-        } catch (_fontLoadError) {
-            // Embedded font is optional; rasterization will fall back to system fonts.
-        }
-        const svgMarkup = buildTransparentSvgMarkup(sourceSvg, {
-            targetWidth: exportWidth,
-            targetHeight: exportHeight,
-            embeddedFontDataUri
-        });
-        const svgBlob = new Blob([svgMarkup], { type: "image/svg+xml;charset=utf-8" });
-
-        const canvas = document.createElement("canvas");
-        canvas.width = exportWidth;
-        canvas.height = exportHeight;
-
-        const context = canvas.getContext("2d");
-        if (!context) {
-            throw new Error("canvas context unavailable");
-        }
-
-        let rendered = false;
-        try {
-            await drawSvgBlobToCanvas(canvas, context, svgBlob);
-            rendered = true;
-        } catch (_svgDrawError) {
-            rendered = false;
-        }
-
-        let pngBlob = null;
-        if (rendered) {
-            const trimmedCanvas = trimCanvasTransparentEdges(
-                canvas,
-                trimPadding,
-                2
-            );
-            try {
-                // Keep canvas alpha channel untouched to export transparent background PNG.
-                pngBlob = await canvasToPngBlob(trimmedCanvas);
-            } catch (_canvasExportError) {
-                // canvas.toBlob can throw SecurityError when the canvas is tainted
-                // by cross-origin resources rendered into the SVG; fall through to
-                // the html-to-image renderer which performs its own inlining.
-                pngBlob = null;
-            }
-        }
-
-        if (!pngBlob) {
-            try {
-                const module = await loadHtmlToImageModule();
-                // Render the enlarged stand-alone SVG markup off-screen instead of the
-                // live DOM SVG (which is currently transformed by pan/zoom). This keeps
-                // the fallback at the same high resolution as the main path.
-                const offscreenHost = document.createElement("div");
-                offscreenHost.style.position = "fixed";
-                offscreenHost.style.left = "-99999px";
-                offscreenHost.style.top = "0";
-                offscreenHost.style.pointerEvents = "none";
-                offscreenHost.style.background = "transparent";
-                offscreenHost.style.width = `${exportWidth}px`;
-                offscreenHost.style.height = `${exportHeight}px`;
-                offscreenHost.innerHTML = svgMarkup;
-                document.body.appendChild(offscreenHost);
-                const offscreenSvg = offscreenHost.querySelector("svg");
-                if (offscreenSvg instanceof Element) {
-                    offscreenSvg.setAttribute("width", String(exportWidth));
-                    offscreenSvg.setAttribute("height", String(exportHeight));
-                    offscreenSvg.style.width = `${exportWidth}px`;
-                    offscreenSvg.style.height = `${exportHeight}px`;
-                }
-                // html-to-image tends to render SVG element content at roughly half of
-                // the requested canvas size in some browsers. Bump pixelRatio so the
-                // produced bitmap still hits the target dimensions.
-                const fallbackPixelRatio = 3;
-                try {
-                    if (offscreenSvg && typeof module?.toBlob === "function") {
-                        pngBlob = await module.toBlob(offscreenSvg, {
-                            cacheBust: true,
-                            backgroundColor: "rgba(0,0,0,0)",
-                            pixelRatio: fallbackPixelRatio,
-                            width: exportWidth,
-                            height: exportHeight,
-                            canvasWidth: exportWidth,
-                            canvasHeight: exportHeight,
-                            skipAutoScale: true,
-                            style: {
-                                transform: "none",
-                                background: "transparent",
-                                backgroundColor: "transparent"
-                            }
-                        });
-                    }
-                    if (!pngBlob && offscreenSvg && typeof module?.toPng === "function") {
-                        const dataUrl = await module.toPng(offscreenSvg, {
-                            cacheBust: true,
-                            backgroundColor: "rgba(0,0,0,0)",
-                            pixelRatio: fallbackPixelRatio,
-                            width: exportWidth,
-                            height: exportHeight,
-                            canvasWidth: exportWidth,
-                            canvasHeight: exportHeight,
-                            skipAutoScale: true
-                        });
-                        pngBlob = await dataUrlToBlob(dataUrl);
-                    }
-                } finally {
-                    offscreenHost.remove();
-                }
-            } catch (_fallbackError) {
-                pngBlob = null;
-            }
-        }
-
-        if (pngBlob) {
-            try {
-                pngBlob = await normalizePngBlobBounds(pngBlob, {
-                    padding: trimPadding,
-                    alphaThreshold: 2
-                });
-            } catch (_normalizeError) {
-                // Keep the un-normalized blob if trimming fails for any reason.
-            }
-        }
-
-        if (!pngBlob) {
-            throw new Error("png encoding failed");
-        }
-
+        const pngBlob = await generateTransparentPngBlob(dom);
         const pngUrl = URL.createObjectURL(pngBlob);
         const anchor = document.createElement("a");
         anchor.href = pngUrl;
@@ -686,8 +690,37 @@ async function exportDiagramAsTransparentPng({ dom, fileNameManager, toast, t })
         URL.revokeObjectURL(pngUrl);
         toast.show(t("toast.pngDownloadStarted"));
     } catch (error) {
+        if (error instanceof Error && error.message === "no diagram to export") {
+            toast.show(t("toast.noDiagramToDownload"), true);
+            return;
+        }
         console.error("Transparent PNG export failed:", error);
         toast.show(t("toast.pngDownloadFailed"), true);
+    }
+}
+
+async function copyDiagramAsPngToClipboard({ dom, toast, t }) {
+    try {
+        if (
+            typeof window.ClipboardItem !== "function" ||
+            !navigator.clipboard ||
+            typeof navigator.clipboard.write !== "function"
+        ) {
+            throw new Error("clipboard png unsupported");
+        }
+        const pngBlob = await generateTransparentPngBlob(dom);
+        const clipboardItem = new window.ClipboardItem({
+            [pngBlob.type || "image/png"]: pngBlob
+        });
+        await navigator.clipboard.write([clipboardItem]);
+        toast.show(t("toast.pngCopied"));
+    } catch (error) {
+        if (error instanceof Error && error.message === "no diagram to export") {
+            toast.show(t("toast.noDiagramToDownload"), true);
+            return;
+        }
+        console.error("Copy PNG failed:", error);
+        toast.show(t("toast.pngCopyFailed"), true);
     }
 }
 
@@ -986,6 +1019,22 @@ export function registerExportEvents(options) {
         });
     }
 
+    if (dom.copyPngFloatingBtn) {
+        dom.copyPngFloatingBtn.addEventListener("click", () => {
+            dom.copyPngBtn.click();
+        });
+    }
+
+    const setPngActionButtonsDisabled = (disabled) => {
+        const disabledClassAction = disabled ? "add" : "remove";
+        [dom.downloadPngBtn, dom.downloadPngFloatingBtn, dom.copyPngBtn, dom.copyPngFloatingBtn]
+            .filter(Boolean)
+            .forEach((button) => {
+                button.disabled = disabled;
+                button.classList[disabledClassAction]("opacity-75", "cursor-not-allowed");
+            });
+    };
+
     dom.downloadPngBtn.addEventListener("click", async () => {
         const overlay = dom.pngExportLoadingOverlay;
         const showOverlay = () => {
@@ -1003,12 +1052,7 @@ export function registerExportEvents(options) {
             overlay.classList.remove("flex");
         };
 
-        dom.downloadPngBtn.disabled = true;
-        dom.downloadPngBtn.classList.add("opacity-75", "cursor-not-allowed");
-        if (dom.downloadPngFloatingBtn) {
-            dom.downloadPngFloatingBtn.disabled = true;
-            dom.downloadPngFloatingBtn.classList.add("opacity-75", "cursor-not-allowed");
-        }
+        setPngActionButtonsDisabled(true);
         showOverlay();
 
         // Yield two animation frames so the overlay actually paints before the
@@ -1021,12 +1065,41 @@ export function registerExportEvents(options) {
             await exportDiagramAsTransparentPng({ dom, fileNameManager, toast, t });
         } finally {
             hideOverlay();
-            dom.downloadPngBtn.disabled = false;
-            dom.downloadPngBtn.classList.remove("opacity-75", "cursor-not-allowed");
-            if (dom.downloadPngFloatingBtn) {
-                dom.downloadPngFloatingBtn.disabled = false;
-                dom.downloadPngFloatingBtn.classList.remove("opacity-75", "cursor-not-allowed");
+            setPngActionButtonsDisabled(false);
+        }
+    });
+
+    dom.copyPngBtn.addEventListener("click", async () => {
+        const overlay = dom.pngExportLoadingOverlay;
+        const showOverlay = () => {
+            if (!overlay) {
+                return;
             }
+            overlay.classList.remove("hidden");
+            overlay.classList.add("flex");
+        };
+        const hideOverlay = () => {
+            if (!overlay) {
+                return;
+            }
+            overlay.classList.add("hidden");
+            overlay.classList.remove("flex");
+        };
+
+        setPngActionButtonsDisabled(true);
+        showOverlay();
+
+        // Yield two animation frames so the overlay actually paints before the
+        // synchronous canvas rasterization work begins on the main thread.
+        await new Promise((resolve) =>
+            window.requestAnimationFrame(() => window.requestAnimationFrame(resolve))
+        );
+
+        try {
+            await copyDiagramAsPngToClipboard({ dom, toast, t });
+        } finally {
+            hideOverlay();
+            setPngActionButtonsDisabled(false);
         }
     });
 }

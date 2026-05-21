@@ -108,9 +108,10 @@
                                 <span class="shrink-0" data-i18n="export.currentFileLabel">Current file</span>:
                                 <input id="currentFileNameInput" type="text" value="diagram.drawio" class="flex-1 w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500">
                             </div>
-                            <div class="mt-2 grid grid-cols-2 gap-2">
+                            <div class="mt-2 grid grid-cols-3 gap-2">
                                 <button id="downloadXmlBtn" type="button" class="w-full text-xs bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded transition-colors font-medium text-center" data-i18n="export.downloadBtn">Download XML</button>
                                 <button id="downloadPngBtn" type="button" class="w-full text-xs bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded transition-colors font-medium text-center" data-i18n="export.downloadTransparentPngBtn">Export PNG</button>
+                                <button id="copyPngBtn" type="button" class="w-full text-xs bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded transition-colors font-medium text-center" data-i18n="export.copyPngBtn">Copy PNG</button>
                             </div>
                         </div>
                     </div>
@@ -294,6 +295,10 @@
             <button id="downloadPngFloatingBtn" type="button" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border border-slate-300 bg-white/90 text-slate-600 hover:bg-slate-100 transition-colors text-xs font-semibold shadow-sm" data-i18n-title="export.exportPngBtn" aria-label="Export PNG">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                 <span data-i18n="export.exportPngBtn">Export PNG</span>
+            </button>
+            <button id="copyPngFloatingBtn" type="button" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border border-slate-300 bg-white/90 text-slate-600 hover:bg-slate-100 transition-colors text-xs font-semibold shadow-sm" data-i18n-title="export.copyPngBtn" aria-label="Copy PNG">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span data-i18n="export.copyPngBtn">Copy PNG</span>
             </button>
             <button id="openShortcutsBtn" type="button" class="inline-flex items-center px-2.5 py-1.5 rounded-full border border-slate-300 bg-white/90 text-slate-600 hover:bg-slate-100 transition-colors text-xs font-semibold shadow-sm" data-i18n="shortcuts.openBtn">Shortcuts</button>
         </div>
