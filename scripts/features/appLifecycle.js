@@ -171,6 +171,10 @@ export async function initializeApp(options) {
     if (storedAiPrompt) {
         dom.aiPrompt.value = storedAiPrompt;
     }
+    const validImageSizeLimits = new Set(["none", "a4-portrait", "a4-landscape"]);
+    const storedImageSizeLimit = readStoredValue(storageKeys.aiImageSizeLimit);
+    dom.aiImageSizeLimitSelect.value =
+        validImageSizeLimits.has(storedImageSizeLimit) ? storedImageSizeLimit : "none";
 
     const initialSourceFormat = readStoredValue(storageKeys.sourceFormat) || "auto";
     setSourceFormatHint(initialSourceFormat, { persist: false });

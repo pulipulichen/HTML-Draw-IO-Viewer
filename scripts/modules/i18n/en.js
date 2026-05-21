@@ -40,6 +40,12 @@ window.I18N_TRANSLATIONS.en = {
     "ai.promptLabel": "Edit diagram with natural language",
     "ai.promptPlaceholder":
         "Example: Add a red 'End' node at the end, or generate a login flowchart...",
+    "ai.imageSizeLimitLabel": "Image size constraint",
+    "ai.imageSizeLimitNone": "No limit",
+    "ai.imageSizeLimitA4Portrait": "A4 Portrait",
+    "ai.imageSizeLimitA4Landscape": "A4 Landscape",
+    "ai.imageSizeLimitPromptA4Portrait": "Please constrain the final diagram layout to match an A4 portrait aspect (about 1:1.414). Keep all content within this page area and avoid overflow.",
+    "ai.imageSizeLimitPromptA4Landscape": "Please constrain the final diagram layout to match an A4 landscape aspect (about 1.414:1). Keep all content within this page area and avoid overflow.",
     "ai.promptQuickOrgChart": "Org Chart",
     "ai.promptQuickColorAdjust": "Adjust Colors",
     "ai.promptQuickTranslateEnglish": "Translate to English",

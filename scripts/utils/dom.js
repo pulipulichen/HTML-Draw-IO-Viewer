@@ -41,6 +41,7 @@ export function getDomElements() {
         apiKeyInput: getRequiredElement("apiKeyInput"),
         modelInput: getRequiredElement("modelInput"),
         aiPrompt: getRequiredElement("aiPrompt"),
+        aiImageSizeLimitSelect: getRequiredElement("aiImageSizeLimitSelect"),
         promptHistorySearchInput: getRequiredElement("promptHistorySearchInput"),
         promptHistoryList: getRequiredElement("promptHistoryList"),
         promptHistoryEmpty: getRequiredElement("promptHistoryEmpty"),

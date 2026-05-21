@@ -17,6 +17,7 @@
 - Added prompt-history management actions (`Delete` per entry and `Clear all`) with dedicated toast feedback for cleanup workflows.
 - Added automatic Mermaid diagram image attachment for the `Mermaid to Draw.io` quick prompt flow, so conversion requests include a visual reference when no highlighted-region snapshot is present.
 - Added an `Attach Full Snapshot` action in the AI panel to capture and attach the current full diagram image as multimodal context without enabling highlighted-region-only edit constraints.
+- Added an AI image-size constraint selector (`No limit`, `A4 Portrait`, `A4 Landscape`) that persists in `localStorage` and conditionally appends A4 layout guidance to submitted prompts.
 - Added `Copy PNG` actions in both the Source export bar and preview quick-actions, enabling direct transparent PNG copy-to-clipboard without a download step.
 
 ### Changed

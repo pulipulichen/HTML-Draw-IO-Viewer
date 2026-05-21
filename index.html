@@ -229,6 +229,14 @@
                                 <img id="selectedRegionPreview" alt="Selected region preview" class="w-full max-h-36 object-contain border border-indigo-100 rounded bg-slate-50">
                                 <p id="selectedRegionMeta" class="text-[11px] text-indigo-700 mt-1"></p>
                             </div>
+                            <div class="mt-3 border-t border-indigo-100 pt-3">
+                                <label for="aiImageSizeLimitSelect" class="block text-xs font-medium text-indigo-700 mb-1" data-i18n="ai.imageSizeLimitLabel">Image Size Constraint</label>
+                                <select id="aiImageSizeLimitSelect" class="w-full px-2 py-1.5 border border-indigo-200 rounded-md text-xs bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option value="none" data-i18n="ai.imageSizeLimitNone">No limit</option>
+                                    <option value="a4-portrait" data-i18n="ai.imageSizeLimitA4Portrait">A4 Portrait</option>
+                                    <option value="a4-landscape" data-i18n="ai.imageSizeLimitA4Landscape">A4 Landscape</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="mt-3">

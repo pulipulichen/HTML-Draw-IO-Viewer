@@ -31,6 +31,23 @@ export function registerAiEvents(options) {
         }
     };
     let shouldAttachMermaidReferenceImage = false;
+    const IMAGE_SIZE_LIMIT_VALUES = new Set(["none", "a4-portrait", "a4-landscape"]);
+
+    function getImageSizeLimitValue() {
+        const value = String(dom.aiImageSizeLimitSelect?.value || "");
+        return IMAGE_SIZE_LIMIT_VALUES.has(value) ? value : "none";
+    }
+
+    function buildPromptWithImageSizeLimit(basePrompt) {
+        const sizeLimit = getImageSizeLimitValue();
+        if (sizeLimit === "a4-portrait") {
+            return `${basePrompt}\n\n${t("ai.imageSizeLimitPromptA4Portrait")}`;
+        }
+        if (sizeLimit === "a4-landscape") {
+            return `${basePrompt}\n\n${t("ai.imageSizeLimitPromptA4Landscape")}`;
+        }
+        return basePrompt;
+    }
 
     function utf8ToBase64(text) {
         const bytes = new TextEncoder().encode(text);
@@ -151,9 +168,15 @@ export function registerAiEvents(options) {
     dom.aiPrompt.addEventListener("input", () => {
         writeStoredValue(storageKeys.aiPrompt, dom.aiPrompt.value);
     });
+    dom.aiImageSizeLimitSelect.addEventListener("change", () => {
+        const sizeLimit = getImageSizeLimitValue();
+        dom.aiImageSizeLimitSelect.value = sizeLimit;
+        writeStoredValue(storageKeys.aiImageSizeLimit, sizeLimit);
+    });
 
     const submitAiPrompt = async () => {
         const prompt = dom.aiPrompt.value.trim();
+        const promptForAi = buildPromptWithImageSizeLimit(prompt);
         const currentXml = dom.xmlInput.value.trim();
         const currentSourceFormat = getCurrentSourceFormat();
         const apiKey = dom.apiKeyInput.value.trim() || envApiKey;
@@ -194,7 +217,7 @@ export function registerAiEvents(options) {
             }
             const referenceFiles = referenceFilesController.getFiles();
             const resultXml = await requestAiXml({
-                prompt,
+                prompt: promptForAi,
                 currentXml,
                 apiKey,
                 model,
@@ -214,7 +237,7 @@ export function registerAiEvents(options) {
             fileNameManager.markAiEdited();
             const thumbnailDataUrl = await captureHistoryThumbnail();
             aiHistoryController.addEntry({
-                prompt,
+                prompt: promptForAi,
                 resultXml,
                 sourceFormat: getCurrentSourceFormat(),
                 referenceFiles,

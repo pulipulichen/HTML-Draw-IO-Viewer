@@ -7,6 +7,7 @@ export const STORAGE_KEYS = {
     aiHistory: "drawio-viewer-ai-history",
     leftPanelTab: "drawio-viewer-left-panel-tab",
     aiPrompt: "drawio-viewer-ai-prompt",
+    aiImageSizeLimit: "drawio-viewer-ai-image-size-limit",
     aiPromptHistory: "drawio-viewer-ai-prompt-history",
     highlightMode: "drawio-viewer-highlight-mode",
     sourceFormat: "drawio-viewer-source-format"
