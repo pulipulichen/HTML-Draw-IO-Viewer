@@ -62,6 +62,9 @@ test("loads .mmd file and keeps mermaid format behavior", async ({ page }) => {
     await expect(page.locator("#xmlInput")).not.toHaveValue("");
 
     const samplePath = path.join(process.cwd(), "demo", "mermaid_example1.mmd");
+    page.on("dialog", (dialog) => {
+        dialog.accept().catch(() => {});
+    });
     await page.setInputFiles("#fileInput", samplePath);
 
     await expect(page.locator("#sourceFormatSelect")).toHaveValue("mermaid");

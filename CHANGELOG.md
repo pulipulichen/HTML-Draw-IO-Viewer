@@ -91,6 +91,7 @@
 
 - Fixed viewer layer cleanup to remove all existing `diagram-host`/`empty-view` nodes before re-render, preventing stale hidden SVG nodes from affecting render assertions.
 - Fixed Mermaid E2E flakiness in `e2e/mermaid.spec.js` by avoiding source-format `change` side effects during setup and increasing the SVG visibility wait timeout for async Mermaid module rendering.
+- Fixed `.mmd` import E2E behavior in `e2e/mermaid.spec.js` by explicitly accepting overwrite confirmation dialogs during file upload, preventing false failures where source format stayed `drawio`.
 
 ## 0.0.1
 
