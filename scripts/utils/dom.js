@@ -86,6 +86,7 @@ export function getDomElements() {
         eraseHighlightBtn: getRequiredElement("eraseHighlightBtn"),
         clearHighlightsBtn: getRequiredElement("clearHighlightsBtn"),
         selectionBox: getRequiredElement("selectionBox"),
+        fileDropOverlay: getRequiredElement("fileDropOverlay"),
         aiLoadingOverlay: getRequiredElement("aiLoadingOverlay"),
         pngExportLoadingOverlay: getRequiredElement("pngExportLoadingOverlay"),
         xmlExportLoadingOverlay: getRequiredElement("xmlExportLoadingOverlay")

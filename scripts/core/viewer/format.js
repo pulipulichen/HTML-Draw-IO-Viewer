@@ -21,6 +21,16 @@ function looksLikeMermaid(sourceText) {
     );
 }
 
+export function detectDiagramSourceFormat(sourceText) {
+    if (looksLikeDrawioXml(sourceText)) {
+        return "drawio";
+    }
+    if (looksLikeMermaid(sourceText)) {
+        return "mermaid";
+    }
+    return null;
+}
+
 export function resolveRenderFormat(sourceText, formatHint = "auto") {
     if (formatHint === "drawio") {
         return "drawio";
@@ -28,11 +38,5 @@ export function resolveRenderFormat(sourceText, formatHint = "auto") {
     if (formatHint === "mermaid") {
         return "mermaid";
     }
-    if (looksLikeDrawioXml(sourceText)) {
-        return "drawio";
-    }
-    if (looksLikeMermaid(sourceText)) {
-        return "mermaid";
-    }
-    return "drawio";
+    return detectDiagramSourceFormat(sourceText) || "drawio";
 }

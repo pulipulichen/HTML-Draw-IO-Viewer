@@ -19,6 +19,7 @@
 - Added an `Attach Full Snapshot` action in the AI panel to capture and attach the current full diagram image as multimodal context without enabling highlighted-region-only edit constraints.
 - Added an AI image-size constraint selector (`No limit`, `A4 Portrait`, `A4 Landscape`) that persists in `localStorage` and conditionally appends A4 layout guidance to submitted prompts.
 - Added `Copy PNG` actions in both the Source export bar and preview quick-actions, enabling direct transparent PNG copy-to-clipboard without a download step.
+- Added a full-window file drag overlay that clearly indicates users can drop diagram files anywhere in the app.
 
 ### Changed
 
@@ -67,12 +68,15 @@
 - Updated startup sample fallback to respect the persisted source mode (`mermaid` loads Mermaid sample, otherwise Draw.io sample).
 - Updated snapshot preview behavior to support both highlighted-region snapshots and full-diagram reference snapshots in a single shared preview area with source-aware metadata.
 - Updated AI request assembly to prioritize user-attached full snapshots as `diagramReferenceImage`, while keeping highlighted-region snapshots as the dedicated partial-edit input path.
+- Updated local file import to auto-detect Draw.io or Mermaid mode from file contents instead of relying only on the file extension.
+- Updated drag-and-drop import so users can drop supported diagram files anywhere in the app window.
 - Updated `README.md` and `README_zh_tw.md` to align docs with current dual-mode behavior (Draw.io/Mermaid), including mode-aware export (`XML`/`MMD`), source-format switching, prompt-history workflows, full-snapshot attachment, and the renamed `Load Sample` interaction flow.
 - Updated the online demo link in both `README.md` and `README_zh_tw.md` to `https://pulipulichen.github.io/HTML-AI-Diagram-Editor/`.
 
 ### Fixed
 
 - Fixed accidental sample overwrite during mode switches by adding a confirmation prompt when current source content differs from the target sample content.
+- Fixed accidental overwrite during sample/file/URL imports by adding confirmation prompts whenever incoming content differs from the current source.
 - Fixed selected version-card highlight clipping at the top/left edges of the scroll container by using an inset ring style.
 - Fixed Mermaid preview failures for pasted Markdown fenced code blocks by normalizing Mermaid input before rendering.
 - Fixed Mermaid `Syntax error in text` rendering cases by adding pre-render Mermaid parse validation and defensive error handling for error-markup SVG output.

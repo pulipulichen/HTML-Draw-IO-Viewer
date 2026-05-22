@@ -872,6 +872,24 @@ export function registerInputEvents(options) {
                     preferredFormat = "mermaid";
                 }
                 const sample = await loadExampleXml(preferredFormat);
+                const currentSourceContent = dom.xmlInput.value.trim();
+                const sampleContent = sample.content.trim();
+                const shouldConfirmOverwrite =
+                    Boolean(currentSourceContent) &&
+                    currentSourceContent !== sampleContent;
+
+                if (shouldConfirmOverwrite) {
+                    const confirmed = window.confirm(
+                        t(
+                            "confirm.loadSampleOverwrite",
+                            "Loading sample will replace current content. Continue?"
+                        )
+                    );
+                    if (!confirmed) {
+                        return;
+                    }
+                }
+
                 setSourceFormatHint(sample.sourceFormatHint);
                 fillXmlAndRender(sample.content, { sourceFormatHint: sample.sourceFormatHint });
                 fileNameManager.setSourceFileName(sample.fileName);
@@ -897,6 +915,12 @@ export function registerTabEvents(options) {
 
 export function registerUrlEvents(options) {
     const { dom, toast, t, fetchXmlFromUrl, fillXmlAndRender, fileNameManager, setFetchLoading } = options;
+    const shouldConfirmOverwriteCurrentSource = (nextContent) => {
+        const currentSourceContent = dom.xmlInput.value.trim();
+        const incomingContent = nextContent.trim();
+        return Boolean(currentSourceContent) && currentSourceContent !== incomingContent;
+    };
+
     dom.fetchBtn.addEventListener("click", async () => {
         const url = dom.urlInput.value.trim();
         if (!url) {
@@ -907,6 +931,17 @@ export function registerUrlEvents(options) {
         setFetchLoading(true);
         try {
             const xmlText = await fetchXmlFromUrl(url);
+            if (shouldConfirmOverwriteCurrentSource(xmlText)) {
+                const confirmed = window.confirm(
+                    t(
+                        "confirm.loadUrlOverwrite",
+                        "Loading from URL will replace current content. Continue?"
+                    )
+                );
+                if (!confirmed) {
+                    return;
+                }
+            }
             fillXmlAndRender(xmlText);
             fileNameManager.setSourceFileName(fileNameManager.inferFileNameFromUrl(url));
             toast.show(t("toast.urlLoadSuccess"));
@@ -1132,25 +1167,57 @@ export function registerFileEvents(options) {
         readTextFile,
         fillXmlAndRender,
         fileNameManager,
-        onFileLoaded = () => {}
+        inferFileSourceFormat = () => null
     } = options;
+    const shouldConfirmOverwriteCurrentSource = (nextContent) => {
+        const currentSourceContent = dom.xmlInput.value.trim();
+        const incomingContent = nextContent.trim();
+        return Boolean(currentSourceContent) && currentSourceContent !== incomingContent;
+    };
 
     async function handleFile(file) {
-        if (!isSupportedDiagramFile(file.name)) {
-            toast.show(t("toast.unsupportedFile"), true);
-            return;
-        }
-
         try {
+            const isSupportedByName = isSupportedDiagramFile(file.name);
             const text = await readTextFile(file);
-            onFileLoaded(file, text);
-            fillXmlAndRender(text);
+            const sourceFormatHint = inferFileSourceFormat(file, text);
+            if (!isSupportedByName && !sourceFormatHint) {
+                toast.show(t("toast.unsupportedFile"), true);
+                return;
+            }
+            if (shouldConfirmOverwriteCurrentSource(text)) {
+                const confirmed = window.confirm(
+                    t(
+                        "confirm.loadFileOverwrite",
+                        "Loading file will replace current content. Continue?"
+                    )
+                );
+                if (!confirmed) {
+                    return;
+                }
+            }
+
+            fillXmlAndRender(
+                text,
+                sourceFormatHint ? { sourceFormatHint } : {}
+            );
             fileNameManager.setSourceFileName(file.name);
             toast.show(`${t("toast.fileLoaded")}: ${file.name}`);
         } catch (_error) {
             toast.show(t("toast.fileReadError"), true);
         }
     }
+
+    const eventHasFiles = (event) => Array.from(event.dataTransfer?.types || []).includes("Files");
+
+    let windowDragDepth = 0;
+
+    const setDropOverlayVisible = (isVisible) => {
+        if (!dom.fileDropOverlay) {
+            return;
+        }
+        dom.fileDropOverlay.classList.toggle("hidden", !isVisible);
+        dom.fileDropOverlay.classList.toggle("flex", isVisible);
+    };
 
     dom.uploadBtn.addEventListener("click", (event) => {
         event.stopPropagation();
@@ -1180,19 +1247,51 @@ export function registerFileEvents(options) {
         document.body.addEventListener(eventName, preventDefaults);
     });
 
+    const setDropzoneActive = (isActive) => {
+        dom.dropzone.classList.toggle("border-blue-500", isActive);
+        dom.dropzone.classList.toggle("bg-blue-50", isActive);
+        setDropOverlayVisible(isActive);
+    };
+
     ["dragenter", "dragover"].forEach((eventName) => {
-        dom.dropzone.addEventListener(eventName, () => {
-            dom.dropzone.classList.add("border-blue-500", "bg-blue-50");
+        dom.dropzone.addEventListener(eventName, () => setDropzoneActive(true));
+        document.body.addEventListener(eventName, (event) => {
+            if (!eventHasFiles(event)) {
+                return;
+            }
+            if (eventName === "dragenter") {
+                windowDragDepth += 1;
+            }
+            setDropzoneActive(true);
         });
     });
 
     ["dragleave", "drop"].forEach((eventName) => {
-        dom.dropzone.addEventListener(eventName, () => {
-            dom.dropzone.classList.remove("border-blue-500", "bg-blue-50");
-        });
+        dom.dropzone.addEventListener(eventName, () => setDropzoneActive(false));
+    });
+
+    document.body.addEventListener("dragleave", (event) => {
+        if (!eventHasFiles(event)) {
+            return;
+        }
+        windowDragDepth = Math.max(0, windowDragDepth - 1);
+        if (windowDragDepth === 0 || event.relatedTarget === null) {
+            setDropzoneActive(false);
+        }
     });
 
     dom.dropzone.addEventListener("drop", async (event) => {
+        windowDragDepth = 0;
+        setDropzoneActive(false);
+        const file = event.dataTransfer?.files?.[0];
+        if (file) {
+            await handleFile(file);
+        }
+    });
+
+    document.body.addEventListener("drop", async (event) => {
+        windowDragDepth = 0;
+        setDropzoneActive(false);
         const file = event.dataTransfer?.files?.[0];
         if (file) {
             await handleFile(file);

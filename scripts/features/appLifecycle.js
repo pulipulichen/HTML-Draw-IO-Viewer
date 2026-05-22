@@ -7,6 +7,7 @@ import {
     registerTabEvents,
     registerUrlEvents
 } from "./appEventBindings.js";
+import { detectDiagramSourceFormat } from "../core/viewer/format.js";
 
 export function registerAppEvents(options) {
     const {
@@ -86,13 +87,19 @@ export function registerAppEvents(options) {
         readTextFile,
         fillXmlAndRender,
         fileNameManager,
-        onFileLoaded: (file) => {
+        inferFileSourceFormat: (file, text) => {
+            const detectedFormat = detectDiagramSourceFormat(text);
+            if (detectedFormat) {
+                return detectedFormat;
+            }
             const name = String(file?.name || "").toLowerCase();
             if (name.endsWith(".mmd") || name.endsWith(".mermaid")) {
-                setSourceFormatHint("mermaid");
-                return;
+                return "mermaid";
             }
-            setSourceFormatHint("drawio");
+            if (name.endsWith(".xml") || name.endsWith(".drawio")) {
+                return "drawio";
+            }
+            return null;
         }
     });
 

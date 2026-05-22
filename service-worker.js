@@ -1,6 +1,6 @@
 /* global self, caches */
 
-const CACHE_VERSION = "v25";
+const CACHE_VERSION = "v27";
 const APP_CACHE = `drawio-ai-editor-${CACHE_VERSION}`;
 const APP_SHELL_FILES = [
     "./",
