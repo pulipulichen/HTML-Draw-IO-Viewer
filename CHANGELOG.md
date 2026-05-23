@@ -76,6 +76,7 @@
 ### Fixed
 
 - Fixed accidental sample overwrite during mode switches by adding a confirmation prompt when current source content differs from the target sample content.
+- Fixed mode-switch sample loading to detect the current input format first, so switching to the same format (`Draw.io` XML or `Mermaid`) no longer force-loads the default sample.
 - Fixed accidental overwrite during sample/file/URL imports by adding confirmation prompts whenever incoming content differs from the current source.
 - Fixed selected version-card highlight clipping at the top/left edges of the scroll container by using an inset ring style.
 - Fixed Mermaid preview failures for pasted Markdown fenced code blocks by normalizing Mermaid input before rendering.

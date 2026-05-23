@@ -1,3 +1,4 @@
+import { detectDiagramSourceFormat } from "../core/viewer/format.js";
 import { getEmbeddedNotoSansTcFontDataUri } from "../services/fontEmbedService.js";
 
 function triggerXmlDownload(xmlText, fileName) {
@@ -756,7 +757,13 @@ export function registerInputEvents(options) {
     const applySourceFormatChange = async (selectedFormat, { forceSampleLoad = false } = {}) => {
         const currentMode = getCurrentSourceFormat() === "mermaid" ? "mermaid" : "drawio";
         const canLoadSample = selectedFormat === "drawio" || selectedFormat === "mermaid";
-        const shouldLoadSample = canLoadSample && (forceSampleLoad || !dom.xmlInput.value.trim());
+        const currentSourceContent = dom.xmlInput.value.trim();
+        const hasCurrentSourceContent = Boolean(currentSourceContent);
+        const detectedSourceFormat = detectDiagramSourceFormat(currentSourceContent);
+        const shouldLoadSample =
+            canLoadSample &&
+            (!hasCurrentSourceContent ||
+                (forceSampleLoad && detectedSourceFormat !== selectedFormat));
         if (shouldLoadSample) {
             isSwitchingSourceFormat = true;
             if (dom.currentSourceModeBadge instanceof HTMLButtonElement) {
@@ -764,7 +771,6 @@ export function registerInputEvents(options) {
             }
             try {
                 const sample = await loadExampleXml(selectedFormat);
-                const currentSourceContent = dom.xmlInput.value.trim();
                 const sampleContent = sample.content.trim();
                 const shouldConfirmOverwrite =
                     forceSampleLoad &&
