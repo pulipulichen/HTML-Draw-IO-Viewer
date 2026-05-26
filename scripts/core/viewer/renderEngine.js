@@ -1,3 +1,5 @@
+import { extractMermaidFromMarkdown } from "./format.js";
+
 const EMPTY_VIEW_HTML =
     '<div class="absolute inset-0 flex items-center justify-center text-slate-400">%EMPTY_MESSAGE%</div>';
 const DIAGRAM_HOST_SELECTOR = '[data-viewer-role="diagram-host"]';
@@ -59,12 +61,12 @@ function activatePanTool(diagramHost) {
 }
 
 function normalizeMermaidSource(diagramSource) {
-    let source = String(diagramSource || "").trim();
+    let source = extractMermaidFromMarkdown(diagramSource).text;
     if (!source) {
         return source;
     }
 
-    // Accept common markdown blocks and extract pure Mermaid content.
+    // Accept common markdown wrappers and extract pure Mermaid content.
     source = source
         .replace(/^```mermaid\s*/i, "")
         .replace(/^```\s*/i, "")

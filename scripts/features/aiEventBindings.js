@@ -7,6 +7,8 @@ export function registerAiEvents(options) {
         storageKeys,
         envApiKey,
         defaultModelName,
+        defaultBaseUrl,
+        defaultThinkingLevel,
         requestAiXml,
         selectionController,
         referenceFilesController,
@@ -36,6 +38,12 @@ export function registerAiEvents(options) {
     function getImageSizeLimitValue() {
         const value = String(dom.aiImageSizeLimitSelect?.value || "");
         return IMAGE_SIZE_LIMIT_VALUES.has(value) ? value : "none";
+    }
+
+    function setImageSizeLimitValue(value) {
+        const sizeLimit = IMAGE_SIZE_LIMIT_VALUES.has(value) ? value : "none";
+        dom.aiImageSizeLimitSelect.value = sizeLimit;
+        writeStoredValue(storageKeys.aiImageSizeLimit, sizeLimit);
     }
 
     function buildPromptWithImageSizeLimit(basePrompt) {
@@ -160,6 +168,9 @@ export function registerAiEvents(options) {
         dom.aiPrompt.value = t(promptKey);
         writeStoredValue(storageKeys.aiPrompt, dom.aiPrompt.value);
         shouldAttachMermaidReferenceImage = promptKey === "ai.promptExampleMermaidToDrawio";
+        if (shouldAttachMermaidReferenceImage) {
+            setImageSizeLimitValue("a4-portrait");
+        }
         dom.aiPrompt.focus();
         const cursorPos = dom.aiPrompt.value.length;
         dom.aiPrompt.setSelectionRange(cursorPos, cursorPos);
@@ -169,9 +180,7 @@ export function registerAiEvents(options) {
         writeStoredValue(storageKeys.aiPrompt, dom.aiPrompt.value);
     });
     dom.aiImageSizeLimitSelect.addEventListener("change", () => {
-        const sizeLimit = getImageSizeLimitValue();
-        dom.aiImageSizeLimitSelect.value = sizeLimit;
-        writeStoredValue(storageKeys.aiImageSizeLimit, sizeLimit);
+        setImageSizeLimitValue(getImageSizeLimitValue());
     });
 
     const submitAiPrompt = async () => {
@@ -181,6 +190,8 @@ export function registerAiEvents(options) {
         const currentSourceFormat = getCurrentSourceFormat();
         const apiKey = dom.apiKeyInput.value.trim() || envApiKey;
         const model = dom.modelInput.value.trim() || defaultModelName;
+        const baseUrl = dom.geminiBaseUrlInput.value.trim() || defaultBaseUrl;
+        const thinkingLevel = dom.geminiThinkingLevelSelect.value || defaultThinkingLevel;
 
         if (!prompt) {
             toast.show(t("toast.promptRequired"), true);
@@ -197,6 +208,8 @@ export function registerAiEvents(options) {
 
         aiPromptHistoryController.addPrompt(prompt);
         dom.modelInput.value = model;
+        dom.geminiBaseUrlInput.value = baseUrl;
+        dom.geminiThinkingLevelSelect.value = thinkingLevel;
         persistGeminiSettings();
 
         setAiLoading(true);
@@ -221,6 +234,8 @@ export function registerAiEvents(options) {
                 currentXml,
                 apiKey,
                 model,
+                baseUrl,
+                thinkingLevel,
                 referenceFiles,
                 selectedRegionImage: usedSelectedRegionImage,
                 diagramReferenceImage,

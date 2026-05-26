@@ -1,3 +1,28 @@
+export function extractMermaidFromMarkdown(sourceText) {
+    const text = String(sourceText ?? "").trim();
+    if (!text) {
+        return { text, extracted: false };
+    }
+
+    const mermaidFenceMatch = text.match(/```mermaid\s*([\s\S]*?)```/i);
+    if (mermaidFenceMatch?.[1]) {
+        return {
+            text: mermaidFenceMatch[1].trim(),
+            extracted: true
+        };
+    }
+
+    const mermaidContainerMatch = text.match(/:::\s*mermaid\s*([\s\S]*?):::/i);
+    if (mermaidContainerMatch?.[1]) {
+        return {
+            text: mermaidContainerMatch[1].trim(),
+            extracted: true
+        };
+    }
+
+    return { text, extracted: false };
+}
+
 function looksLikeDrawioXml(sourceText) {
     const text = sourceText.trim();
     if (!text.startsWith("<")) {
@@ -7,7 +32,7 @@ function looksLikeDrawioXml(sourceText) {
 }
 
 function looksLikeMermaid(sourceText) {
-    const text = sourceText.trim();
+    const text = extractMermaidFromMarkdown(sourceText).text;
     if (!text || text.startsWith("<")) {
         return false;
     }

@@ -40,6 +40,8 @@ export function getDomElements() {
         loadingState: getRequiredElement("loadingState"),
         apiKeyInput: getRequiredElement("apiKeyInput"),
         modelInput: getRequiredElement("modelInput"),
+        geminiBaseUrlInput: getRequiredElement("geminiBaseUrlInput"),
+        geminiThinkingLevelSelect: getRequiredElement("geminiThinkingLevelSelect"),
         aiPrompt: getRequiredElement("aiPrompt"),
         aiImageSizeLimitSelect: getRequiredElement("aiImageSizeLimitSelect"),
         promptHistorySearchInput: getRequiredElement("promptHistorySearchInput"),

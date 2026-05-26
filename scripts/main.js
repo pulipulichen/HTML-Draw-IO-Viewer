@@ -1,6 +1,8 @@
 import {
     DEFAULT_DIAGRAM_FILE_NAME,
+    DEFAULT_GEMINI_BASE_URL,
     DEFAULT_MODEL_NAME,
+    DEFAULT_THINKING_LEVEL,
     DRAWIO_EDITOR_URL,
     ENV_API_KEY,
     EXAMPLE_DRAWIO_PATH,
@@ -19,6 +21,7 @@ import { createSelectionController } from "./features/selectionController.js";
 import { createShortcutsController } from "./features/shortcutsController.js";
 import { createSourceFormatController } from "./features/sourceFormatController.js";
 import { createUiStateController } from "./features/uiStateController.js";
+import { extractMermaidFromMarkdown } from "./core/viewer/format.js";
 import { initializeI18n, onLanguageChange, t } from "./modules/i18n.js";
 import { registerServiceWorker } from "./pwa/registerServiceWorker.js";
 import { requestAiXml } from "./services/aiService.js";
@@ -60,7 +63,9 @@ const geminiSettingsController = createGeminiSettingsController({
     readStoredValue,
     writeStoredValue,
     storageKeys: STORAGE_KEYS,
-    defaultModelName: DEFAULT_MODEL_NAME
+    defaultModelName: DEFAULT_MODEL_NAME,
+    defaultBaseUrl: DEFAULT_GEMINI_BASE_URL,
+    defaultThinkingLevel: DEFAULT_THINKING_LEVEL
 });
 
 const sourceFormatController = createSourceFormatController({
@@ -84,7 +89,14 @@ const selectionController = createSelectionController({
 
 function fillXmlAndRender(xmlText, options = {}) {
     const { persist = true, clearSelection = true, sourceFormatHint = null } = options;
-    dom.xmlInput.value = xmlText;
+    let nextSourceText = String(xmlText ?? "");
+    if (sourceFormatHint !== "drawio") {
+        const { text, extracted } = extractMermaidFromMarkdown(nextSourceText);
+        if (extracted) {
+            nextSourceText = text;
+        }
+    }
+    dom.xmlInput.value = nextSourceText;
     if (sourceFormatHint) {
         setSourceFormatHint(sourceFormatHint, { persist });
     }
@@ -92,9 +104,9 @@ function fillXmlAndRender(xmlText, options = {}) {
         selectionController.clearSelectedRegion();
         selectionController.setSelectionMode(false);
     }
-    render(xmlText);
+    render(nextSourceText);
     if (persist) {
-        writeStoredValue(STORAGE_KEYS.diagramXml, xmlText);
+        writeStoredValue(STORAGE_KEYS.diagramXml, nextSourceText);
     }
 }
 
@@ -167,6 +179,8 @@ function registerEvents() {
         drawioEditorUrl: DRAWIO_EDITOR_URL,
         envApiKey: ENV_API_KEY,
         defaultModelName: DEFAULT_MODEL_NAME,
+        defaultBaseUrl: DEFAULT_GEMINI_BASE_URL,
+        defaultThinkingLevel: DEFAULT_THINKING_LEVEL,
         requestAiXml,
         selectionController,
         referenceFilesController,

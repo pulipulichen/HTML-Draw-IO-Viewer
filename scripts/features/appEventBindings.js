@@ -1,4 +1,4 @@
-import { detectDiagramSourceFormat } from "../core/viewer/format.js";
+import { detectDiagramSourceFormat, extractMermaidFromMarkdown } from "../core/viewer/format.js";
 import { getEmbeddedNotoSansTcFontDataUri } from "../services/fontEmbedService.js";
 
 function triggerXmlDownload(xmlText, fileName) {
@@ -754,6 +754,18 @@ export function registerInputEvents(options) {
         writeStoredValue(storageKeys.aiPrompt, "");
     };
 
+    const normalizeSourceInput = (sourceText) => {
+        const selectedFormat = dom.sourceFormatSelect.value;
+        if (selectedFormat === "drawio") {
+            return String(sourceText ?? "");
+        }
+        const { text, extracted } = extractMermaidFromMarkdown(sourceText);
+        if (!extracted) {
+            return String(sourceText ?? "");
+        }
+        return text;
+    };
+
     const applySourceFormatChange = async (selectedFormat, { forceSampleLoad = false } = {}) => {
         const currentMode = getCurrentSourceFormat() === "mermaid" ? "mermaid" : "drawio";
         const canLoadSample = selectedFormat === "drawio" || selectedFormat === "mermaid";
@@ -816,6 +828,10 @@ export function registerInputEvents(options) {
     };
 
     dom.xmlInput.addEventListener("input", () => {
+        const normalizedSource = normalizeSourceInput(dom.xmlInput.value);
+        if (normalizedSource !== dom.xmlInput.value) {
+            dom.xmlInput.value = normalizedSource;
+        }
         writeStoredValue(storageKeys.diagramXml, dom.xmlInput.value);
     });
 

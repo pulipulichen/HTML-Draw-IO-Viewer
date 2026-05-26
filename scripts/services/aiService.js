@@ -1,4 +1,6 @@
 const RETRY_DELAYS = [1000, 2000, 4000, 8000, 16000];
+const DEFAULT_GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/";
+const THINKING_LEVEL_VALUES = new Set(["MINIMAL", "LOW", "MEDIUM", "HIGH"]);
 const FALLBACK_DRAWIO_SYSTEM_PROMPT =
     "你是一個精通 Draw.io (mxGraph) XML 結構的專家。使用者的目標是根據他們的要求建立或修改 Draw.io 圖表。請你只回傳純 XML 字串，絕對不要包含任何 Markdown 格式標記（如 ```xml），也不要加上任何多餘的解釋或對話。必須確保輸出的內容是可以直接被 Draw.io 解析的合法 XML，以 <mxfile> 開頭，</mxfile> 結尾。請注意圖表中各節點的座標 x,y 佈局，讓他們看起來是整齊的。若有提供標亮圖，表示只允許修改標亮區域；未標亮區域的節點、連線、文字與座標必須維持不變。";
 const FALLBACK_MERMAID_SYSTEM_PROMPT =
@@ -186,6 +188,22 @@ function normalizeSourceFormat(sourceFormat = "drawio") {
     return sourceFormat === "mermaid" ? "mermaid" : "drawio";
 }
 
+function buildGenerateContentUrl(baseUrl, model, apiKey) {
+    const normalizedBaseUrl = String(baseUrl || DEFAULT_GEMINI_BASE_URL).trim() || DEFAULT_GEMINI_BASE_URL;
+    const base = new URL(normalizedBaseUrl.endsWith("/") ? normalizedBaseUrl : `${normalizedBaseUrl}/`);
+    const basePath = base.pathname.replace(/\/+$/, "");
+    const modelPath = `models/${encodeURIComponent(model)}:generateContent`;
+    const endpointPath = basePath.endsWith("/v1beta") ? modelPath : `v1beta/${modelPath}`;
+    const url = new URL(endpointPath, base);
+    url.searchParams.set("key", apiKey);
+    return url.toString();
+}
+
+function normalizeThinkingLevel(thinkingLevel) {
+    const normalized = String(thinkingLevel || "").trim().toUpperCase();
+    return THINKING_LEVEL_VALUES.has(normalized) ? normalized : "";
+}
+
 function resolveSystemPromptConfig(sourceFormat = "drawio") {
     const normalized = normalizeSourceFormat(sourceFormat);
     if (normalized === "mermaid") {
@@ -229,12 +247,14 @@ export async function requestAiXml({
     currentXml,
     apiKey,
     model,
+    baseUrl = DEFAULT_GEMINI_BASE_URL,
+    thinkingLevel = "HIGH",
     referenceFiles = [],
     selectedRegionImage = null,
     diagramReferenceImage = null,
     sourceFormat = "drawio"
 }) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const url = buildGenerateContentUrl(baseUrl, model, apiKey);
     const userPrompt = buildUserPrompt(
         currentXml,
         prompt,
@@ -254,6 +274,14 @@ export async function requestAiXml({
         contents: [{ parts: contentParts }],
         systemInstruction: { parts: [{ text: systemPrompt }] }
     };
+    const normalizedThinkingLevel = normalizeThinkingLevel(thinkingLevel);
+    if (normalizedThinkingLevel) {
+        payload.generationConfig = {
+            thinkingConfig: {
+                thinkingLevel: normalizedThinkingLevel
+            }
+        };
+    }
 
     const data = await fetchWithRetry(url, {
         method: "POST",

@@ -43,6 +43,9 @@ test("renders Mermaid source and shows conversion button", async ({ page }) => {
     // convertMermaidBtn 位於 AI 分頁面板內，需先切到該分頁才會真的顯示出來
     await page.click("#aiTabBtn");
     await expect(page.locator("#convertMermaidBtn")).toBeVisible();
+    await page.selectOption("#aiImageSizeLimitSelect", "none");
+    await page.click("#convertMermaidBtn");
+    await expect(page.locator("#aiImageSizeLimitSelect")).toHaveValue("a4-portrait");
 
     // 切回編輯器分頁才能操作 sourceFormatSelect / formatBtn；
     // 先清空 xmlInput 再切到 drawio 模式，避免把 Mermaid 內容餵給 drawio viewer

@@ -18,6 +18,7 @@
 - Added automatic Mermaid diagram image attachment for the `Mermaid to Draw.io` quick prompt flow, so conversion requests include a visual reference when no highlighted-region snapshot is present.
 - Added an `Attach Full Snapshot` action in the AI panel to capture and attach the current full diagram image as multimodal context without enabling highlighted-region-only edit constraints.
 - Added an AI image-size constraint selector (`No limit`, `A4 Portrait`, `A4 Landscape`) that persists in `localStorage` and conditionally appends A4 layout guidance to submitted prompts.
+- Added Gemini settings for configurable API base URL and thinking level, including persisted `HIGH` reasoning defaults for supported Gemini models.
 - Added `Copy PNG` actions in both the Source export bar and preview quick-actions, enabling direct transparent PNG copy-to-clipboard without a download step.
 - Added a full-window file drag overlay that clearly indicates users can drop diagram files anywhere in the app.
 
@@ -52,10 +53,12 @@
 - Updated the current file-name row to use a fluid input field and standard text sizing for improved readability and editing comfort.
 - Updated the Draw.io editor section label to use i18n via the new translation key `export.drawioEditorLabel` in both `en` and `zh-TW` dictionaries.
 - Updated Draw.io mode naming in the source-format selector and current-mode badge from `Draw.io XML` to `Draw.io` for clearer, shorter UI wording.
+- Updated the source editor label copy from `XML Source (Live Preview)` to `Source (Live Preview)` for clearer format-agnostic wording in Mermaid mode.
 - Updated the AI panel bottom actions so only the primary submit flow remains sticky, while the `Demo: Translate to English` action now appears as regular content at the end of the AI tab.
 - Updated quick prompt UX from tiny inline links to fluid wrapped chip-style buttons below the prompt textarea for clearer discoverability.
 - Updated prompt examples to include a Draw.io-only compact-layout option (`Make Layout More Compact`) with mode-aware visibility and synchronized detailed prompt text across `en`/`zh-TW`.
 - Updated prompt examples to keep `Adjust Colors`, add a dedicated `Translate to English` quick prompt, and expose that translation prompt in both Draw.io and Mermaid modes.
+- Moved the current-mode label next to the mode badge on the right side of the left-panel mode row for clearer alignment.
 - Renamed built-in sample assets to explicit format-prefixed filenames (`demo/drawio_example1.drawio`, `demo/drawio_example2.drawio`, `demo/mermaid_example1.mmd`, `demo/mermaid_example2.mmd`) and updated all runtime references.
 - Updated Mermaid sample semantics so `mermaid_example1.mmd` stays vertical (`TD`) while `mermaid_example2.mmd` stays horizontal (`LR`) for clearer mode demos.
 - Updated `demo/mermaid_example2.mmd` to use the same login-flow content as `demo/mermaid_example1.mmd`, presented in a horizontal (`LR`) layout variant.
@@ -64,6 +67,7 @@
 - Moved the Mermaid-to-Draw.io conversion action into the prompt-examples chip row, replacing the separate bottom conversion button.
 - Updated the Mermaid conversion chip behavior to match other prompt-example chips (it now only fills the prompt textarea), and renamed the Traditional Chinese prompt-examples label from `範例用詞` to `範例提示詞`.
 - Updated the English Mermaid-to-Draw.io prompt example text to explicitly forbid `<!-- -->` comments in generated output.
+- Updated the Mermaid-to-Draw.io quick prompt to automatically select the `A4 Portrait` image-size constraint.
 - Updated the prompt-history panel interaction to start collapsed by default, with explicit `Expand` / `Collapse` toggles in both `en` and `zh-TW`.
 - Updated startup sample fallback to respect the persisted source mode (`mermaid` loads Mermaid sample, otherwise Draw.io sample).
 - Updated snapshot preview behavior to support both highlighted-region snapshots and full-diagram reference snapshots in a single shared preview area with source-aware metadata.
@@ -80,6 +84,8 @@
 - Fixed accidental overwrite during sample/file/URL imports by adding confirmation prompts whenever incoming content differs from the current source.
 - Fixed selected version-card highlight clipping at the top/left edges of the scroll container by using an inset ring style.
 - Fixed Mermaid preview failures for pasted Markdown fenced code blocks by normalizing Mermaid input before rendering.
+- Fixed Mermaid parsing when users paste full Markdown documents by extracting Mermaid code blocks (` ```mermaid ... ``` ` / `::: mermaid ... :::`) before render.
+- Fixed Mermaid source editing flow so pasted Markdown is auto-normalized and the Source textarea is rewritten to pure Mermaid syntax.
 - Fixed Mermaid `Syntax error in text` rendering cases by adding pre-render Mermaid parse validation and defensive error handling for error-markup SVG output.
 - Fixed PNG export canvas taint issues caused by remote web-font fetching during SVG rasterization by fully switching export text rendering to local embedded font data.
 - Fixed Mermaid E2E instability in `e2e/mermaid.spec.js` by asserting `#convertMermaidBtn` from the AI tab context, switching textarea checks to `toHaveValue`, and avoiding expected Draw.io parser console errors during format toggles.
