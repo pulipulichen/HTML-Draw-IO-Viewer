@@ -188,14 +188,13 @@ function normalizeSourceFormat(sourceFormat = "drawio") {
     return sourceFormat === "mermaid" ? "mermaid" : "drawio";
 }
 
-function buildGenerateContentUrl(baseUrl, model, apiKey) {
+function buildGenerateContentUrl(baseUrl, model) {
     const normalizedBaseUrl = String(baseUrl || DEFAULT_GEMINI_BASE_URL).trim() || DEFAULT_GEMINI_BASE_URL;
     const base = new URL(normalizedBaseUrl.endsWith("/") ? normalizedBaseUrl : `${normalizedBaseUrl}/`);
     const basePath = base.pathname.replace(/\/+$/, "");
     const modelPath = `models/${encodeURIComponent(model)}:generateContent`;
     const endpointPath = basePath.endsWith("/v1beta") ? modelPath : `v1beta/${modelPath}`;
     const url = new URL(endpointPath, base);
-    url.searchParams.set("key", apiKey);
     return url.toString();
 }
 
@@ -254,7 +253,7 @@ export async function requestAiXml({
     diagramReferenceImage = null,
     sourceFormat = "drawio"
 }) {
-    const url = buildGenerateContentUrl(baseUrl, model, apiKey);
+    const url = buildGenerateContentUrl(baseUrl, model);
     const userPrompt = buildUserPrompt(
         currentXml,
         prompt,
@@ -285,7 +284,10 @@ export async function requestAiXml({
 
     const data = await fetchWithRetry(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey
+        },
         body: JSON.stringify(payload)
     });
 

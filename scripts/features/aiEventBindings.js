@@ -66,6 +66,15 @@ export function registerAiEvents(options) {
         return window.btoa(binary);
     }
 
+    function loadImageDataUrl(dataUrl) {
+        return new Promise((resolve, reject) => {
+            const image = new Image();
+            image.onload = () => resolve(image);
+            image.onerror = () => reject(new Error("無法將 Mermaid SVG 轉成 PNG"));
+            image.src = dataUrl;
+        });
+    }
+
     function getRenderedDiagramSvgElement() {
         const diagramHost = dom.viewerContainer.querySelector('[data-viewer-role="diagram-host"]');
         const hostCandidates = diagramHost ? Array.from(diagramHost.querySelectorAll("svg")) : [];
@@ -94,7 +103,7 @@ export function registerAiEvents(options) {
         return bestElement;
     }
 
-    function captureCurrentMermaidDiagramImage() {
+    async function captureCurrentMermaidDiagramImage() {
         const sourceSvg = getRenderedDiagramSvgElement();
         if (!(sourceSvg instanceof SVGElement)) {
             return null;
@@ -126,10 +135,25 @@ export function registerAiEvents(options) {
         }
 
         const serializedSvg = new XMLSerializer().serializeToString(clonedSvg);
-        const dataUrl = `data:image/svg+xml;base64,${utf8ToBase64(serializedSvg)}`;
+        const svgDataUrl = `data:image/svg+xml;base64,${utf8ToBase64(serializedSvg)}`;
+        const image = await loadImageDataUrl(svgDataUrl);
+        const scale = Math.min(window.devicePixelRatio || 1, 2);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(width * scale));
+        canvas.height = Math.max(1, Math.round(height * scale));
+
+        const context = canvas.getContext("2d");
+        if (!context) {
+            return null;
+        }
+
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
         return {
-            mimeType: "image/svg+xml",
-            dataUrl,
+            mimeType: "image/png",
+            dataUrl: canvas.toDataURL("image/png"),
             width,
             height
         };
@@ -223,7 +247,7 @@ export function registerAiEvents(options) {
                 shouldAttachMermaidReferenceImage &&
                 currentSourceFormat === "mermaid"
             ) {
-                mermaidReferenceImage = captureCurrentMermaidDiagramImage();
+                mermaidReferenceImage = await captureCurrentMermaidDiagramImage();
             }
             if (!diagramReferenceImage) {
                 diagramReferenceImage = mermaidReferenceImage;

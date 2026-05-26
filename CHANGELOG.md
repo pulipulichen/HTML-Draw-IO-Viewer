@@ -72,6 +72,7 @@
 - Updated startup sample fallback to respect the persisted source mode (`mermaid` loads Mermaid sample, otherwise Draw.io sample).
 - Updated snapshot preview behavior to support both highlighted-region snapshots and full-diagram reference snapshots in a single shared preview area with source-aware metadata.
 - Updated AI request assembly to prioritize user-attached full snapshots as `diagramReferenceImage`, while keeping highlighted-region snapshots as the dedicated partial-edit input path.
+- Updated Gemini requests to send the API key through the `x-goog-api-key` header instead of the URL query string.
 - Updated local file import to auto-detect Draw.io or Mermaid mode from file contents instead of relying only on the file extension.
 - Updated drag-and-drop import so users can drop supported diagram files anywhere in the app window.
 - Updated `README.md` and `README_zh_tw.md` to align docs with current dual-mode behavior (Draw.io/Mermaid), including mode-aware export (`XML`/`MMD`), source-format switching, prompt-history workflows, full-snapshot attachment, and the renamed `Load Sample` interaction flow.
