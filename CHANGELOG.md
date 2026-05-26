@@ -96,6 +96,7 @@
 - Fixed current file-name persistence by saving the `Current file` input to `localStorage` and restoring it on reload.
 - Fixed mode-switch prompt state by clearing the AI prompt and synchronizing the empty value to `localStorage` whenever Draw.io/Mermaid mode is manually toggled.
 - Fixed file-name extension mismatch after Mermaid-to-Draw.io AI conversion by auto-normalizing the current file extension to `.drawio` when the AI result is Draw.io XML.
+- Fixed Mermaid-to-Draw.io AI conversion requests by rasterizing the Mermaid SVG snapshot to PNG before sending it to Gemini, avoiding unsupported `image/svg+xml` inline image errors.
 
 - Fixed viewer layer cleanup to remove all existing `diagram-host`/`empty-view` nodes before re-render, preventing stale hidden SVG nodes from affecting render assertions.
 - Fixed Mermaid E2E flakiness in `e2e/mermaid.spec.js` by avoiding source-format `change` side effects during setup and increasing the SVG visibility wait timeout for async Mermaid module rendering.
