@@ -22,6 +22,7 @@
 - Added Gemini settings for configurable API base URL and thinking level, including persisted `HIGH` reasoning defaults for supported Gemini models.
 - Added `Copy PNG` actions in both the Source export bar and preview quick-actions, enabling direct transparent PNG copy-to-clipboard without a download step.
 - Added a full-window file drag overlay that clearly indicates users can drop diagram files anywhere in the app.
+- Added language-scoped prompt text assets under `scripts/modules/i18n/en/` and `scripts/modules/i18n/zh-TW/`, with one standalone `.txt` file per quick-prompt example for easier content editing.
 
 ### Changed
 
@@ -59,6 +60,7 @@
 - Updated quick prompt UX from tiny inline links to fluid wrapped chip-style buttons below the prompt textarea for clearer discoverability.
 - Updated prompt examples to include a Draw.io-only compact-layout option (`Make Layout More Compact`) with mode-aware visibility and synchronized detailed prompt text across `en`/`zh-TW`.
 - Updated prompt examples to keep `Adjust Colors`, add a dedicated `Translate to English` quick prompt, and expose that translation prompt in both Draw.io and Mermaid modes.
+- Updated prompt chip click behavior to fetch example text dynamically from per-language `.txt` files (with i18n dictionary fallback when files are unavailable).
 - Moved the current-mode label next to the mode badge on the right side of the left-panel mode row for clearer alignment.
 - Added mode-aware sidebar styling so the left panel background now changes with the active source mode (blue for Draw.io, green for Mermaid) for clearer visual context.
 - Renamed built-in sample assets to explicit format-prefixed filenames (`demo/drawio_example1.drawio`, `demo/drawio_example2.drawio`, `demo/mermaid_example1.mmd`, `demo/mermaid_example2.mmd`) and updated all runtime references.

@@ -74,7 +74,7 @@ window.I18N_TRANSLATIONS["zh-TW"] = {
     "ai.promptExampleIgTone": "幫我依照IG色調，調整現在的圖片",
     "ai.promptExampleTranslateEnglish": "請保留目前圖表的結構與連線，將所有節點與標籤文字翻譯成英文。",
     "ai.promptExampleCompactLayout": "讓框框之間距離更近，但要保留能夠顯示線條箭頭的距離。不要讓框框重疊。而框框也儘可能縮小到能夠顯示文字的程度。",
-    "ai.promptExampleMermaidToDrawio": "請把目前的 Mermaid 圖表完整轉換成 Draw.io（mxGraph）XML，保持流程、連線關係與節點語意一致。若有 subgraph，請在 Draw.io 以群組或容器呈現。不要用 <!-- --> 撰寫註解。可以重新排版，使其更容易閱讀。畫面請儘量緊湊。",
+    "ai.promptExampleMermaidToDrawio": "請把目前的 Mermaid 圖表完整轉換成 Draw.io（mxGraph）XML，保持流程、連線關係與節點語意一致。若有 subgraph，請在 Draw.io 以群組或容器呈現。不要用 <!-- --> 撰寫註解。可以重新排版、線條儘量不要交疊，使其更容易閱讀。畫面請儘量緊湊。",
     "ai.referenceLabel": "參考檔案",
     "ai.referenceHint": "可附加參考檔案給 AI（txt/md/xml/json/js/css/html...）",
     "ai.selectReferencesBtn": "選擇檔案",

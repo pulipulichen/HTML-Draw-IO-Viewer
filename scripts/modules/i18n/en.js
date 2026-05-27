@@ -75,7 +75,7 @@ window.I18N_TRANSLATIONS.en = {
     "ai.promptExampleIgTone": "Adjust the current image using an Instagram-like color tone.",
     "ai.promptExampleTranslateEnglish": "Keep the current diagram structure and connections, then translate all node and label text into English.",
     "ai.promptExampleCompactLayout": "Bring the boxes closer together, but keep enough space for connector lines and arrowheads to remain visible. Do not let boxes overlap. Also shrink each box as much as possible while still fitting its text.",
-    "ai.promptExampleMermaidToDrawio": "Please convert the current Mermaid diagram into Draw.io (mxGraph) XML while preserving flow, connections, and node semantics. If there are subgraphs, represent them as groups or containers in Draw.io. Do not use <!-- --> comments. You can re-layout the diagram to make it more readable. Please make the layout as compact as possible.",
+    "ai.promptExampleMermaidToDrawio": "Please convert the current Mermaid diagram into Draw.io (mxGraph) XML while preserving flow, connections, and node semantics. If there are subgraphs, represent them as groups or containers in Draw.io. Do not use <!-- --> comments. You can re-layout the diagram to make it more readable. Lines should not overlap as much as possible. Please make the layout as compact as possible.",
     "ai.referenceLabel": "Reference Files",
     "ai.referenceHint": "Attach files for AI context (txt/md/xml/json/js/css/html...)",
     "ai.selectReferencesBtn": "Select files",

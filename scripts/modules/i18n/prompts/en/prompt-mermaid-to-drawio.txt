@@ -1,0 +1,1 @@
+Please convert the current Mermaid diagram into Draw.io (mxGraph) XML while preserving flow, connections, and node semantics. If there are subgraphs, represent them as groups or containers in Draw.io. Do not use <!-- --> comments. You can re-layout the diagram to make it more readable. Lines should not overlap as much as possible. Please make the layout as compact as possible.

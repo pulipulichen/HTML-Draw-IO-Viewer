@@ -1,0 +1,1 @@
+Keep the current diagram structure and connections, then translate all node and label text into English.

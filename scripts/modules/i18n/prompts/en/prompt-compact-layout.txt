@@ -1,0 +1,1 @@
+Bring the boxes closer together, but keep enough space for connector lines and arrowheads to remain visible. Do not let boxes overlap. Also shrink each box as much as possible while still fitting its text.

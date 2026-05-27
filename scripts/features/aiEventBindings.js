@@ -34,6 +34,15 @@ export function registerAiEvents(options) {
     };
     const MERMAID_THUMBNAIL_REFERENCE_KEY = "mermaid-thumbnail-reference";
     const IMAGE_SIZE_LIMIT_VALUES = new Set(["none", "a4-portrait", "a4-landscape"]);
+    const PROMPT_TEXT_BASE_PATH = "./scripts/modules/i18n/prompts";
+    const PROMPT_TEXT_SUPPORTED_LANGUAGES = new Set(["en", "zh-TW"]);
+    const PROMPT_TEXT_FILE_BY_KEY = Object.freeze({
+        "ai.promptExampleOrgChart": "prompt-org-chart.txt",
+        "ai.promptExampleIgTone": "prompt-ig-tone.txt",
+        "ai.promptExampleTranslateEnglish": "prompt-translate-english.txt",
+        "ai.promptExampleCompactLayout": "prompt-compact-layout.txt",
+        "ai.promptExampleMermaidToDrawio": "prompt-mermaid-to-drawio.txt"
+    });
 
     function getImageSizeLimitValue() {
         const value = String(dom.aiImageSizeLimitSelect?.value || "");
@@ -55,6 +64,41 @@ export function registerAiEvents(options) {
             return `${basePrompt}\n\n${t("ai.imageSizeLimitPromptA4Landscape")}`;
         }
         return basePrompt;
+    }
+
+    function resolvePromptTextLanguage(inputLanguage) {
+        const normalized = String(inputLanguage || "").trim();
+        if (PROMPT_TEXT_SUPPORTED_LANGUAGES.has(normalized)) {
+            return normalized;
+        }
+        if (!normalized) {
+            return "en";
+        }
+        const normalizedLower = normalized.toLowerCase();
+        if (normalizedLower.startsWith("zh")) {
+            return "zh-TW";
+        }
+        return "en";
+    }
+
+    async function loadPromptTextFromFile(promptKey) {
+        const fileName = PROMPT_TEXT_FILE_BY_KEY[promptKey];
+        if (!fileName) {
+            return null;
+        }
+        const language = resolvePromptTextLanguage(document.documentElement.lang);
+        const filePath = `${PROMPT_TEXT_BASE_PATH}/${language}/${fileName}`;
+        try {
+            const response = await window.fetch(filePath, { cache: "no-store" });
+            if (!response.ok) {
+                throw new Error(`載入 prompt 檔案失敗 (${response.status})`);
+            }
+            const text = await response.text();
+            return text.trim();
+        } catch (error) {
+            console.warn(`Prompt 檔案載入失敗: ${filePath}`, error);
+            return null;
+        }
     }
 
     function utf8ToBase64(text) {
@@ -167,7 +211,7 @@ export function registerAiEvents(options) {
         return /<mxfile[\s>]|<mxGraphModel[\s>]|<diagram[\s>]/i.test(normalized);
     }
 
-    dom.aiTabPanel.addEventListener("click", (event) => {
+    dom.aiTabPanel.addEventListener("click", async (event) => {
         let target = null;
         if (event.target instanceof Element) {
             target = event.target.closest("button[data-prompt-key], button[data-action=\"clearPrompt\"]");
@@ -188,7 +232,8 @@ export function registerAiEvents(options) {
             return;
         }
 
-        dom.aiPrompt.value = t(promptKey);
+        const promptText = await loadPromptTextFromFile(promptKey);
+        dom.aiPrompt.value = promptText === null ? t(promptKey) : promptText;
         writeStoredValue(storageKeys.aiPrompt, dom.aiPrompt.value);
         if (promptKey === "ai.promptExampleMermaidToDrawio") {
             setImageSizeLimitValue("a4-portrait");
