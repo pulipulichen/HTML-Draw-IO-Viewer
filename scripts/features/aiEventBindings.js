@@ -32,7 +32,7 @@ export function registerAiEvents(options) {
             filePath: "./demo/mermaid_example2.mmd"
         }
     };
-    let shouldAttachMermaidReferenceImage = false;
+    const MERMAID_THUMBNAIL_REFERENCE_KEY = "mermaid-thumbnail-reference";
     const IMAGE_SIZE_LIMIT_VALUES = new Set(["none", "a4-portrait", "a4-landscape"]);
 
     function getImageSizeLimitValue() {
@@ -179,7 +179,6 @@ export function registerAiEvents(options) {
         if (target.dataset.action === "clearPrompt") {
             dom.aiPrompt.value = "";
             writeStoredValue(storageKeys.aiPrompt, "");
-            shouldAttachMermaidReferenceImage = false;
             dom.aiPrompt.focus();
             return;
         }
@@ -191,13 +190,35 @@ export function registerAiEvents(options) {
 
         dom.aiPrompt.value = t(promptKey);
         writeStoredValue(storageKeys.aiPrompt, dom.aiPrompt.value);
-        shouldAttachMermaidReferenceImage = promptKey === "ai.promptExampleMermaidToDrawio";
-        if (shouldAttachMermaidReferenceImage) {
+        if (promptKey === "ai.promptExampleMermaidToDrawio") {
             setImageSizeLimitValue("a4-portrait");
         }
         dom.aiPrompt.focus();
         const cursorPos = dom.aiPrompt.value.length;
         dom.aiPrompt.setSelectionRange(cursorPos, cursorPos);
+    });
+
+    dom.attachMermaidThumbnailBtn.addEventListener("click", async () => {
+        const currentSourceFormat = getCurrentSourceFormat();
+        if (currentSourceFormat !== "mermaid") {
+            toast.show(t("toast.mermaidOnlyThumbnailAttachment"), true);
+            return;
+        }
+        try {
+            const mermaidImage = await captureCurrentMermaidDiagramImage();
+            if (!mermaidImage?.dataUrl) {
+                throw new Error("capture-failed");
+            }
+            referenceFilesController.upsertImageReference({
+                key: MERMAID_THUMBNAIL_REFERENCE_KEY,
+                name: t("ai.referenceMermaidThumbnailName"),
+                mimeType: mermaidImage.mimeType || "image/png",
+                dataUrl: mermaidImage.dataUrl
+            });
+            toast.show(t("toast.mermaidThumbnailAttached"));
+        } catch (_error) {
+            toast.show(t("toast.mermaidThumbnailAttachFailed"), true);
+        }
     });
 
     dom.aiPrompt.addEventListener("input", () => {
@@ -240,17 +261,9 @@ export function registerAiEvents(options) {
         try {
             const usedSelectedRegionImage = selectionController.getSelectedRegionImage();
             let diagramReferenceImage = selectionController.getDiagramReferenceImage();
-            let mermaidReferenceImage = null;
-            if (
-                !usedSelectedRegionImage &&
-                !diagramReferenceImage &&
-                shouldAttachMermaidReferenceImage &&
-                currentSourceFormat === "mermaid"
-            ) {
-                mermaidReferenceImage = await captureCurrentMermaidDiagramImage();
-            }
             if (!diagramReferenceImage) {
-                diagramReferenceImage = mermaidReferenceImage;
+                const imageReferenceFiles = referenceFilesController.getImageFiles();
+                diagramReferenceImage = imageReferenceFiles[0] || null;
             }
             const referenceFiles = referenceFilesController.getFiles();
             const resultXml = await requestAiXml({
@@ -286,7 +299,6 @@ export function registerAiEvents(options) {
             });
             dom.aiPrompt.value = "";
             writeStoredValue(storageKeys.aiPrompt, "");
-            shouldAttachMermaidReferenceImage = false;
             toast.show(t("toast.aiUpdated"));
         } catch (error) {
             console.error("AI 請求失敗:", error);

@@ -935,6 +935,20 @@ export function registerTabEvents(options) {
     dom.versionsTabBtn.addEventListener("click", () => setActiveTab("versions"));
 }
 
+export function registerSidebarEvents(options) {
+    const { dom, toggleSidebarCollapsed, setSidebarCollapsed } = options;
+    dom.sidebarToggleBtn.addEventListener("click", () => {
+        dom.sidebarToggleBtn.style.display = "none";
+        dom.sidebarExpandBtn.style.display = "inline-flex";
+        toggleSidebarCollapsed();
+    });
+    dom.sidebarExpandBtn.addEventListener("click", () => {
+        dom.sidebarExpandBtn.style.display = "none";
+        dom.sidebarToggleBtn.style.display = "inline-flex";
+        setSidebarCollapsed(false);
+    });
+}
+
 export function registerUrlEvents(options) {
     const { dom, toast, t, fetchXmlFromUrl, fillXmlAndRender, fileNameManager, setFetchLoading } = options;
     const shouldConfirmOverwriteCurrentSource = (nextContent) => {

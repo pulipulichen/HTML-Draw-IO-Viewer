@@ -61,6 +61,11 @@ export function createSourceFormatController({
             modeLabel = t("ai.currentModeMermaid", "Mermaid");
         }
         applyModeBadge(dom.currentSourceModeBadge, modeLabel, isMermaid);
+        if (dom.leftSidebar) {
+            dom.leftSidebar.classList.toggle("sidebar-mode-mermaid", isMermaid);
+            dom.leftSidebar.classList.toggle("sidebar-mode-drawio", !isMermaid);
+            dom.leftSidebar.dataset.sourceMode = isMermaid ? "mermaid" : "drawio";
+        }
     }
 
     function updateMermaidConvertButtonVisibility() {
@@ -84,6 +89,11 @@ export function createSourceFormatController({
             "ai.demoBtnMermaid",
             "Demo: Switch to horizontal layout (No Gemini)"
         );
+    }
+
+    function updateReferenceUiBySourceFormat() {
+        const isMermaid = currentSourceFormat === "mermaid";
+        dom.attachMermaidThumbnailBtn.classList.toggle("hidden", !isMermaid);
     }
 
     function updateExportUiBySourceFormat() {
@@ -119,6 +129,7 @@ export function createSourceFormatController({
                 updateCurrentModeBadge();
                 updateMermaidConvertButtonVisibility();
                 updatePromptExamplesBySourceFormat();
+                updateReferenceUiBySourceFormat();
                 updateExportUiBySourceFormat();
                 return true;
             }
@@ -127,6 +138,7 @@ export function createSourceFormatController({
         updateCurrentModeBadge();
         updateMermaidConvertButtonVisibility();
         updatePromptExamplesBySourceFormat();
+        updateReferenceUiBySourceFormat();
         updateExportUiBySourceFormat();
     }
 
@@ -140,6 +152,7 @@ export function createSourceFormatController({
         getCurrentSourceFormat,
         updateMermaidConvertButtonVisibility,
         updatePromptExamplesBySourceFormat,
+        refreshReferenceUiBySourceFormat: updateReferenceUiBySourceFormat,
         refreshExportUiBySourceFormat: updateExportUiBySourceFormat,
         refreshCurrentModeBadge: updateCurrentModeBadge
     };

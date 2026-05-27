@@ -4,6 +4,7 @@ import {
     registerFileEvents,
     registerFileNameEvents,
     registerInputEvents,
+    registerSidebarEvents,
     registerTabEvents,
     registerUrlEvents
 } from "./appEventBindings.js";
@@ -70,6 +71,11 @@ export function registerAppEvents(options) {
     });
 
     registerTabEvents({ dom, setActiveTab: uiStateController.setActiveTab });
+    registerSidebarEvents({
+        dom,
+        toggleSidebarCollapsed: uiStateController.toggleSidebarCollapsed,
+        setSidebarCollapsed: uiStateController.setSidebarCollapsed
+    });
 
     registerUrlEvents({
         dom,
@@ -177,6 +183,10 @@ export async function initializeApp(options) {
     aiHistoryController.initialize();
     selectionController.initialize();
     uiStateController.setActiveTab(readStoredValue(storageKeys.leftPanelTab), { persist: false });
+    uiStateController.setSidebarCollapsed(
+        readStoredValue(storageKeys.sidebarCollapsed) === "1",
+        { persist: false }
+    );
 
     const storedAiPrompt = readStoredValue(storageKeys.aiPrompt);
     if (storedAiPrompt) {

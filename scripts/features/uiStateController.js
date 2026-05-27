@@ -3,6 +3,7 @@ export function createUiStateController(options) {
     let isFetchLoading = false;
     let isAiLoading = false;
     let activeTab = "editor";
+    let isSidebarCollapsed = false;
 
     function normalizeTab(value) {
         if (value === "ai" || value === "versions") {
@@ -46,11 +47,35 @@ export function createUiStateController(options) {
         }
     }
 
+    function setSidebarCollapsed(collapsed, config = {}) {
+        const { persist = true } = config;
+        isSidebarCollapsed = Boolean(collapsed);
+        const hideLabel = t("layout.sidebarHideBtn", "Hide Sidebar");
+        const showLabel = t("layout.sidebarShowBtn", "Show Sidebar");
+        document.body.classList.toggle("sidebar-collapsed", isSidebarCollapsed);
+        dom.sidebarExpandBtn.classList.toggle("hidden", !isSidebarCollapsed);
+        dom.sidebarToggleBtn.setAttribute("aria-label", hideLabel);
+        dom.sidebarToggleBtn.setAttribute("title", hideLabel);
+        dom.sidebarToggleBtn.setAttribute("aria-expanded", String(!isSidebarCollapsed));
+        dom.sidebarExpandBtn.setAttribute("aria-label", showLabel);
+        dom.sidebarExpandBtn.setAttribute("title", showLabel);
+        if (persist) {
+            writeStoredValue(storageKeys.sidebarCollapsed, isSidebarCollapsed ? "1" : "0");
+        }
+    }
+
+    function toggleSidebarCollapsed() {
+        setSidebarCollapsed(!isSidebarCollapsed);
+    }
+
     return {
         getIsAiLoading: () => isAiLoading,
         getIsFetchLoading: () => isFetchLoading,
+        getIsSidebarCollapsed: () => isSidebarCollapsed,
         setActiveTab,
         setAiLoading,
-        setFetchLoading
+        setFetchLoading,
+        setSidebarCollapsed,
+        toggleSidebarCollapsed
     };
 }

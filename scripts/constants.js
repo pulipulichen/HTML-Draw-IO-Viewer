@@ -12,7 +12,8 @@ export const STORAGE_KEYS = {
     aiImageSizeLimit: "drawio-viewer-ai-image-size-limit",
     aiPromptHistory: "drawio-viewer-ai-prompt-history",
     highlightMode: "drawio-viewer-highlight-mode",
-    sourceFormat: "drawio-viewer-source-format"
+    sourceFormat: "drawio-viewer-source-format",
+    sidebarCollapsed: "drawio-viewer-sidebar-collapsed"
 };
 
 export const DEFAULT_MODEL_NAME = "gemini-flash-latest";

@@ -13,6 +13,8 @@ export function createReferenceFilesController({
     maxReferenceTextLength = 15000
 }) {
     let files = [];
+    const IMAGE_REFERENCE_TYPE = "image";
+    const TEXT_REFERENCE_TYPE = "text";
 
     function sanitizeReferenceContent(content) {
         const trimmed = String(content || "").trim();
@@ -39,7 +41,11 @@ export function createReferenceFilesController({
 
             const label = document.createElement("span");
             label.className = "truncate text-indigo-900";
-            label.textContent = `${file.name} (${Math.round(file.content.length / 1024) || 1} KB)`;
+            if (file.type === IMAGE_REFERENCE_TYPE) {
+                label.textContent = `${file.name} (${t("ai.referenceImageTag", "image")})`;
+            } else {
+                label.textContent = `${file.name} (${Math.round(file.content.length / 1024) || 1} KB)`;
+            }
 
             const removeButton = document.createElement("button");
             removeButton.type = "button";
@@ -66,7 +72,8 @@ export function createReferenceFilesController({
                 return {
                     key: `${file.name}-${file.size}-${file.lastModified}`,
                     name: file.name,
-                    content
+                    content,
+                    type: TEXT_REFERENCE_TYPE
                 };
             })
         );
@@ -80,13 +87,52 @@ export function createReferenceFilesController({
         render();
     }
 
+    function upsertImageReference({ key, name, mimeType = "image/png", dataUrl = "" }) {
+        const normalizedDataUrl = String(dataUrl || "").trim();
+        if (!normalizedDataUrl) {
+            return false;
+        }
+        const normalizedKey = String(key || "").trim() || `image-${Date.now()}`;
+        const normalizedName = String(name || "").trim() || "reference-image.png";
+        const nextItem = {
+            key: normalizedKey,
+            name: normalizedName,
+            type: IMAGE_REFERENCE_TYPE,
+            mimeType: String(mimeType || "image/png"),
+            dataUrl: normalizedDataUrl
+        };
+        const existingIndex = files.findIndex((item) => item.key === normalizedKey);
+        if (existingIndex >= 0) {
+            files.splice(existingIndex, 1, nextItem);
+        } else {
+            files.push(nextItem);
+        }
+        render();
+        return true;
+    }
+
+    function getTextFiles() {
+        return files.filter((file) => file.type !== IMAGE_REFERENCE_TYPE);
+    }
+
+    function getImageFiles() {
+        return files
+            .filter((file) => file.type === IMAGE_REFERENCE_TYPE && file.dataUrl)
+            .map((file) => ({
+                key: file.key,
+                name: file.name,
+                mimeType: file.mimeType || "image/png",
+                dataUrl: file.dataUrl
+            }));
+    }
+
     function clear() {
         files = [];
         render();
     }
 
     function getFiles() {
-        return files.slice();
+        return getTextFiles();
     }
 
     function registerEvents() {
@@ -165,6 +211,8 @@ export function createReferenceFilesController({
     return {
         initialize,
         getFiles,
+        getImageFiles,
+        upsertImageReference,
         clear,
         refreshTexts: render
     };

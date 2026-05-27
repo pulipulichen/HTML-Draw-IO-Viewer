@@ -209,6 +209,7 @@ async function loadExampleXml(format = "drawio") {
 function refreshI18nDrivenUi() {
     uiStateController.setFetchLoading(uiStateController.getIsFetchLoading());
     uiStateController.setAiLoading(uiStateController.getIsAiLoading());
+    uiStateController.setSidebarCollapsed(uiStateController.getIsSidebarCollapsed(), { persist: false });
     referenceFilesController.refreshTexts();
     aiPromptHistoryController.refreshTexts();
     aiHistoryController.refreshTexts();
@@ -217,6 +218,7 @@ function refreshI18nDrivenUi() {
     fileNameManager.updateCurrentFileNameInput();
     sourceFormatController.updateMermaidConvertButtonVisibility();
     sourceFormatController.updatePromptExamplesBySourceFormat();
+    sourceFormatController.refreshReferenceUiBySourceFormat();
     sourceFormatController.refreshCurrentModeBadge();
     sourceFormatController.refreshExportUiBySourceFormat();
     if (!dom.xmlInput.value.trim()) {

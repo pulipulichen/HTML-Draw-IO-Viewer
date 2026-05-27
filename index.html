@@ -23,7 +23,7 @@
 <body class="bg-slate-100 h-screen flex flex-col md:flex-row overflow-hidden font-sans text-slate-800">
 
     <!-- 左側面板：輸入與控制 (增加捲動軸) -->
-    <div class="w-full md:w-[400px] lg:w-[450px] h-1/2 md:h-full bg-white border-r border-slate-200 flex flex-col shadow-lg z-10 overflow-hidden">
+    <div id="leftSidebar" class="left-sidebar w-full md:w-[400px] lg:w-[450px] h-1/2 md:h-full bg-white border-r border-slate-200 flex flex-col shadow-lg z-10 overflow-hidden transition-all duration-300 relative">
         <div class="p-5 flex flex-col gap-6 h-full min-h-0">
             
             <!-- 標題 -->
@@ -242,7 +242,10 @@
                         <div class="mt-3">
                             <div class="flex items-center justify-between mb-2">
                                 <label class="block text-xs font-medium text-indigo-700" data-i18n="ai.referenceLabel">Reference Files</label>
-                                <button id="clearReferenceFilesBtn" type="button" class="text-xs text-indigo-700 hover:text-indigo-900 font-medium" data-i18n="ai.clearReferencesBtn">Clear all</button>
+                                <div class="flex items-center gap-2">
+                                    <button id="attachMermaidThumbnailBtn" type="button" class="text-xs text-indigo-700 hover:text-indigo-900 font-medium" data-i18n="ai.attachMermaidThumbnailBtn">Attach Mermaid Thumbnail</button>
+                                    <button id="clearReferenceFilesBtn" type="button" class="text-xs text-indigo-700 hover:text-indigo-900 font-medium" data-i18n="ai.clearReferencesBtn">Clear all</button>
+                                </div>
                             </div>
                             <div id="referenceDropzone" class="border border-dashed border-indigo-300 rounded-md p-3 text-center bg-white hover:bg-indigo-100/40 transition-colors cursor-pointer">
                                 <p class="text-xs text-indigo-700/80" data-i18n="ai.referenceHint">Attach reference files for AI (txt/md/xml/json/js/css/html...)</p>
@@ -280,9 +283,31 @@
             </div>
         </div>
     </div>
+    <button
+        id="sidebarToggleBtn"
+        type="button"
+        class="sidebar-edge-toggle hidden md:inline-flex items-center justify-center"
+        data-i18n-title="layout.sidebarHideBtn"
+        aria-label="收起側欄"
+        title="收起側欄">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m15 18-6-6 6-6"></path>
+        </svg>
+    </button>
 
     <!-- 右側面板：圖表預覽 -->
     <div class="flex-1 h-1/2 md:h-full relative flex flex-col bg-white">
+        <button
+            id="sidebarExpandBtn"
+            type="button"
+            class="sidebar-edge-toggle sidebar-edge-toggle-expand absolute top-1/2 -translate-y-1/2 z-30 md:inline-flex items-center justify-center"
+            data-i18n-title="layout.sidebarShowBtn"
+            aria-label="顯示側欄"
+            title="顯示側欄">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m9 18 6-6-6-6"></path>
+            </svg>
+        </button>
         <!-- 狀態提示元件 -->
         <div id="toast" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-4 py-2 rounded shadow-lg text-sm transition-opacity duration-300 opacity-0 pointer-events-none z-50">
             Message

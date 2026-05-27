@@ -16,6 +16,7 @@
 - Added an AI prompt-history panel below the prompt textarea with persisted entries, quick refill, and keyword search support.
 - Added prompt-history management actions (`Delete` per entry and `Clear all`) with dedicated toast feedback for cleanup workflows.
 - Added automatic Mermaid diagram image attachment for the `Mermaid to Draw.io` quick prompt flow, so conversion requests include a visual reference when no highlighted-region snapshot is present.
+- Added an `Attach Mermaid Thumbnail` action beside `Reference Files` so users can manually include the current Mermaid snapshot as an AI attachment.
 - Added an `Attach Full Snapshot` action in the AI panel to capture and attach the current full diagram image as multimodal context without enabling highlighted-region-only edit constraints.
 - Added an AI image-size constraint selector (`No limit`, `A4 Portrait`, `A4 Landscape`) that persists in `localStorage` and conditionally appends A4 layout guidance to submitted prompts.
 - Added Gemini settings for configurable API base URL and thinking level, including persisted `HIGH` reasoning defaults for supported Gemini models.
@@ -59,6 +60,7 @@
 - Updated prompt examples to include a Draw.io-only compact-layout option (`Make Layout More Compact`) with mode-aware visibility and synchronized detailed prompt text across `en`/`zh-TW`.
 - Updated prompt examples to keep `Adjust Colors`, add a dedicated `Translate to English` quick prompt, and expose that translation prompt in both Draw.io and Mermaid modes.
 - Moved the current-mode label next to the mode badge on the right side of the left-panel mode row for clearer alignment.
+- Added mode-aware sidebar styling so the left panel background now changes with the active source mode (blue for Draw.io, green for Mermaid) for clearer visual context.
 - Renamed built-in sample assets to explicit format-prefixed filenames (`demo/drawio_example1.drawio`, `demo/drawio_example2.drawio`, `demo/mermaid_example1.mmd`, `demo/mermaid_example2.mmd`) and updated all runtime references.
 - Updated Mermaid sample semantics so `mermaid_example1.mmd` stays vertical (`TD`) while `mermaid_example2.mmd` stays horizontal (`LR`) for clearer mode demos.
 - Updated `demo/mermaid_example2.mmd` to use the same login-flow content as `demo/mermaid_example1.mmd`, presented in a horizontal (`LR`) layout variant.
@@ -68,6 +70,9 @@
 - Updated the Mermaid conversion chip behavior to match other prompt-example chips (it now only fills the prompt textarea), and renamed the Traditional Chinese prompt-examples label from `範例用詞` to `範例提示詞`.
 - Updated the English Mermaid-to-Draw.io prompt example text to explicitly forbid `<!-- -->` comments in generated output.
 - Updated the Mermaid-to-Draw.io quick prompt to automatically select the `A4 Portrait` image-size constraint.
+- Updated Mermaid snapshot attachment behavior from automatic quick-prompt capture to an explicit user-triggered action in the `Reference Files` area.
+- Updated source-format-aware AI reference controls to hide the Mermaid thumbnail attachment button while in Draw.io mode and show it only in Mermaid mode.
+- Added a collapsible left sidebar workflow with persistent state in `localStorage`, including edge-mounted arrow controls for collapse/expand interactions.
 - Updated the prompt-history panel interaction to start collapsed by default, with explicit `Expand` / `Collapse` toggles in both `en` and `zh-TW`.
 - Updated startup sample fallback to respect the persisted source mode (`mermaid` loads Mermaid sample, otherwise Draw.io sample).
 - Updated snapshot preview behavior to support both highlighted-region snapshots and full-diagram reference snapshots in a single shared preview area with source-aware metadata.
@@ -97,6 +102,7 @@
 - Fixed mode-switch prompt state by clearing the AI prompt and synchronizing the empty value to `localStorage` whenever Draw.io/Mermaid mode is manually toggled.
 - Fixed file-name extension mismatch after Mermaid-to-Draw.io AI conversion by auto-normalizing the current file extension to `.drawio` when the AI result is Draw.io XML.
 - Fixed Mermaid-to-Draw.io AI conversion requests by rasterizing the Mermaid SVG snapshot to PNG before sending it to Gemini, avoiding unsupported `image/svg+xml` inline image errors.
+- Fixed edge toggle placement so the sidebar collapse button stays anchored on the right edge of the sidebar instead of drifting into content layout flow.
 
 - Fixed viewer layer cleanup to remove all existing `diagram-host`/`empty-view` nodes before re-render, preventing stale hidden SVG nodes from affecting render assertions.
 - Fixed Mermaid E2E flakiness in `e2e/mermaid.spec.js` by avoiding source-format `change` side effects during setup and increasing the SVG visibility wait timeout for async Mermaid module rendering.
